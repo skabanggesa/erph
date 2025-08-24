@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistem RPH — Mathematics (Print-Safe)</title>
+  <style>
+    :root{
+      --brand:#1d4ed8;
+      --brand-light:#60a5fa;
+      --ink:#111827;
+      --muted:#6b7280;
+      --panel:#ffffff;
+      --line:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{font-family:"Segoe UI",Roboto,Arial,sans-serif;margin:0;background:#f3f4f6;color:var(--ink);line-height:1.6}
+    header{background:linear-gradient(135deg,#8B0000,#B22222,var(--brand),var(--brand-light));color:#fff;padding:28px 16px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+    header h1{margin:0 0 6px;font-weight:700;font-size:1.8rem}
+    header p{margin:0;opacity:.95;font-size:1rem}
+    main{max-width:1100px;margin:20px auto;padding:0 16px 50px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.06)}
+    .row{display:flex;flex-wrap:wrap;gap:16px}
+    .row > *{flex:1 1 220px}
+    label{font-weight:600;color:var(--muted);font-size:.95rem;display:block;margin-bottom:4px}
+    select,input[type="text"]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px;transition:border-color .2s,box-shadow .2s}
+    select:focus,input[type="text"]:focus{border-color:var(--brand);box-shadow:0 0 0 2px rgba(29,78,216,.15);outline:none}
+    table{width:100%;border-collapse:collapse;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+    th{background:#f9fafb;font-weight:700;color:var(--ink)}
+    tr:last-child td{border-bottom:none}
+    .btn{display:inline-block;padding:10px 16px;border-radius:10px;border:1px solid transparent;background:var(--brand);color:#fff;cursor:pointer;font-weight:600;box-shadow:0 4px 12px rgba(29,78,216,.3);transition:.15s}
+    .btn.secondary{background:#0284c7}
+    .btn.ghost{background:#fff;color:var(--brand);border-color:var(--brand);box-shadow:none}
+    .btn:hover{transform:translateY(-1px)}
+    .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+    #output{margin-top:22px}
+    .rph{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 22px 16px;margin:18px 0;box-shadow:0 4px 14px rgba(0,0,0,.06);page-break-after:always}
+    .rph-header{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;align-items:center;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:12px}
+    .rph-title{font-size:1.15rem;font-weight:800;letter-spacing:.3px;color:var(--brand)}
+    .kv{display:grid;grid-template-columns:140px 1fr;gap:2px 10px;font-size:.94rem}
+    .kv b{color:var(--ink)}
+    .section{margin-top:12px}
+    .section h4{margin:12px 0 6px;font-size:1rem;color:var(--ink);position:relative;padding-left:12px}
+    .section h4:before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--brand);border-radius:3px}
+    ul{margin:6px 0 0 18px}
+    .muted{color:var(--muted)}
+    .footer-line{border-top:1px dashed var(--line);margin-top:12px;padding-top:10px;display:flex;justify-content:flex-end;gap:10px}
+    #printSandbox{display:none}
+    .hide-print{}
+    @media print{
+      @page{size:A4;margin:12mm}
+      body{background:#fff}
+      body.printing *{visibility:hidden!important}
+      body.printing #printSandbox,body.printing #printSandbox *{visibility:visible!important}
+      body.printing #printSandbox{display:block!important;position:absolute;left:0;top:0;width:100%}
+      body.printing .rph{page-break-after:always}
+      body.printing .rph:last-child{page-break-after:auto}
+      .hide-print{display:none!important}
+    }
+  </style>
+</head>
+<body>
+<header class="hide-print">
+  <h1>Sistem Rancangan Pengajaran Harian - MATHEMATICS</h1>
+  <p>Auto-generate Mathematics DLP mengikut takwim sekolah (2025)</p>
+</header>
+
+<main>
+  <div class="card hide-print">
+    <div class="row">
+      <div>
+        <label for="subject">Matapelajaran</label>
+        <select id="subject">
+          <option>Mathematics</option>
+        </select>
+      </div>
+      <div>
+        <label for="year">Tahun</label>
+        <select id="year">
+          <option>YEAR 1</option>
+          <option>YEAR 2</option>
+          <option>YEAR 3</option>
+          <option>YEAR 4</option>
+          <option>YEAR 5</option>
+          <option>YEAR 6</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <div style="flex:1 1 100%">
+        <label>Jadual (Isikan Masa)</label>
+        <table>
+          <thead><tr><th>Hari</th><th>Masa</th></tr></thead>
+          <tbody id="jadualBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+<div class="toolbar">
+  <button class="btn" id="genBtn">HASILKAN RPH</button>
+  <div class="filters">
+    <label for="mingguSelect">Minggu</label>
+    <select id="mingguSelect" style="min-width:120px"></select>
+  </div>
+  <button class="btn secondary" id="printWeekBtn">Cetak Minggu Dipilih</button>
+  <button class="btn ghost" id="sendBtn">HANTAR</button>
+</div>
+
+  <div id="output"></div>
+</main>
+
+<div id="printSandbox" aria-hidden="true"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const jadualBody = document.getElementById("jadualBody");
+  ["Isnin","Selasa","Rabu","Khamis","Jumaat"].forEach(h=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td style="width:160px"><b>${h}</b></td>
+                    <td><input type="text" placeholder="cth: 7:10 – 8:10" data-hari="${h}"></td>`;
+    jadualBody.appendChild(tr);
+  });
+});
+
+/* =======================
+   1) Data: Unit Mingguan
+   ======================= */
+const MATH_UNITS = {
+  "YEAR 1": ["Numbers up to 100","Basic addition & subtraction","Money","Time","Length & weight","2D & 3D shapes"],
+  "YEAR 2": ["Numbers up to 1000","Basic multiplication & division","Money & time","Length, mass & volume","Basic fractions","Geometrical shapes"],
+  "YEAR 3": ["Numbers up to 10,000","Extended multiplication & division","Fractions & decimals","Time & money","Length/mass/volume measurement","Basic geometry"],
+  "YEAR 4": ["Numbers up to 100,000","Complex operations (add/subtract/multiply/divide)","Fractions, decimals & percentages","Area & perimeter","3D shapes & symmetry","Data & graphs"],
+  "YEAR 5": ["Numbers up to 1,000,000","Mixed operations","Percentages, ratio & rate","Area & volume","Angles & coordinates","Statistics & basic probability"],
+  "YEAR 6": ["Numbers up to 10,000,000","Basic algebraic expressions","Complex fractions & decimals operations","Advanced area & volume","Geometric transformations","Data, graphs & probability"]
+};
+
+const MATH_POLLS = {
+  "YEAR 1": [
+    {standards:"1.1 Read numbers up to 100.",objectives:"Pupils can recognize numbers up to 100.",activities:["Number cards","Number song","Exercises"],assessment:["Oral questions","Written exercises"],aids:["Number cards","Worksheets"]},
+    {standards:"1.2 Addition within 100.",objectives:"Pupils can solve two-digit addition.",activities:["Ice-cream sticks","Fast addition game","Whiteboard practice"],assessment:["Quick quiz","Individual practice"],aids:["Sticks","Flashcards"]},
+    {standards:"1.3 Subtraction within 100.",objectives:"Pupils can solve two-digit subtraction.",activities:["Whiteboard demo","Workbook exercises","Group practice"],assessment:["Worksheets","Oral questions"],aids:["Whiteboard","Number cards"]},
+    {standards:"1.4 Basic 2D shapes.",objectives:"Pupils can recognize circle, square & triangle.",activities:["Shape matching","Drawing shapes","Shape games"],assessment:["Group activity","Drawing task"],aids:["Shape cards","Graph paper"]},
+    {standards:"1.5 Money up to RM1.",objectives:"Pupils can recognize coins and basic notes.",activities:["Toy shop activity","Money matching","Worksheet"],assessment:["Observation","Written task"],aids:["Toy money","Price cards"]},
+    {standards:"1.6 Time (full hour).",objectives:"Pupils can read time to the hour.",activities:["Clock demo","Time cards","Textbook exercises"],assessment:["Oral Q&A","Written task"],aids:["Toy clock","Time cards"]}
+  ],
+
+  "YEAR 2": [
+    {standards:"2.1 Numbers up to 1000.",objectives:"Pupils can read and write numbers up to 1000.",activities:["Number cards","Arrange numbers","Textbook tasks"],assessment:["Written tasks","Oral questions"],aids:["Number chart","Textbook"]},
+    {standards:"2.2 Basic multiplication.",objectives:"Pupils can multiply tables 2–5.",activities:["Multiplication board","Quiz game","Pair practice"],assessment:["Quick quiz","Exercises"],aids:["Times table chart","Flashcards"]},
+    {standards:"2.3 Basic division.",objectives:"Pupils can divide 2-digit by 1-digit.",activities:["Beads division","Whiteboard tasks","Exercises"],assessment:["Worksheets","Individual tasks"],aids:["Beads","Whiteboard"]},
+    {standards:"2.4 Simple fractions.",objectives:"Pupils can recognize 1/2, 1/3, 1/4.",activities:["Paper pizza","Colour fractions","Worksheets"],assessment:["Individual tasks","Group questions"],aids:["Fraction models","Fraction cards"]},
+    {standards:"2.5 Basic 3D shapes.",objectives:"Pupils can recognize cube, cuboid, cylinder, cone.",activities:["Show real objects","Draw shapes","Matching game"],assessment:["Oral questions","Drawing"],aids:["3D models","Picture cards"]},
+    {standards:"2.6 Money up to RM10.",objectives:"Pupils can calculate change.",activities:["Toy shop activity","Group work","Textbook exercises"],assessment:["Written work","Observation"],aids:["Toy money","Price cards"]}
+  ],
+
+  "YEAR 3": [
+    {standards:"3.1 Numbers up to 10,000.",objectives:"Pupils can write and order numbers.",activities:["Number cards","Arrange numbers game","Exercises"],assessment:["Oral questions","Written tasks"],aids:["Number chart","Textbook"]},
+    {standards:"3.2 Extended multiplication.",objectives:"Pupils can multiply 2-digit × 1-digit.",activities:["Whiteboard demo","Pair work","Group questions"],assessment:["Worksheets","Individual tasks"],aids:["Whiteboard","Flashcards"]},
+    {standards:"3.3 Extended division.",objectives:"Pupils can divide 2-digit ÷ 1-digit with remainders.",activities:["Division demo","Individual work","Exercises"],assessment:["Worksheets","Oral Q&A"],aids:["Division cards","Textbook"]},
+    {standards:"3.4 Fractions & decimals.",objectives:"Pupils can convert simple fractions to decimals.",activities:["Fraction demo","Group work","Exercises"],assessment:["Quick quiz","Worksheets"],aids:["Fraction models","Projector"]},
+    {standards:"3.5 Time & money.",objectives:"Pupils can solve daily problems on time & money.",activities:["Daily problem solving","Toy shop","Written tasks"],assessment:["Written exercises","Class discussion"],aids:["Toy clock","Toy money"]},
+    {standards:"3.6 Basic geometry.",objectives:"Pupils can identify right, acute & obtuse angles.",activities:["Use protractor","Whiteboard tasks","Worksheets"],assessment:["Oral Q&A","Written work"],aids:["Geometry set","Angle cards"]}
+  ],
+
+  "YEAR 4": [
+    {standards:"4.1 Numbers up to 100,000.",objectives:"Pupils can read and write big numbers.",activities:["Number cards","Whiteboard exercises","Written tasks"],assessment:["Oral Q&A","Written tasks"],aids:["Large number chart","Textbook"]},
+    {standards:"4.2 Addition/subtraction (5-digit).",objectives:"Pupils can solve 5-digit problems.",activities:["Group work","Quiz game","Individual practice"],assessment:["Worksheets","Oral Q&A"],aids:["Whiteboard","Flashcards"]},
+    {standards:"4.3 Fractions & decimals.",objectives:"Pupils can convert fractions to decimals.",activities:["Fraction models","Textbook tasks","Group work"],assessment:["Written exercises","Quick quiz"],aids:["Fraction models","Flashcards"]},
+    {standards:"4.4 Percentages basics.",objectives:"Pupils can calculate simple percentages.",activities:["Shopping examples","Written tasks","Discussion"],assessment:["Individual tasks","Class Q&A"],aids:["Price cards","Calculator"]},
+    {standards:"4.5 Area & perimeter.",objectives:"Pupils can calculate rectangle area.",activities:["Graph paper","Group tasks","Written exercises"],assessment:["Worksheets","Individual tasks"],aids:["Graph paper","Ruler"]},
+    {standards:"4.6 Data & graphs.",objectives:"Pupils can draw simple bar graphs.",activities:["Class survey","Draw graphs","Presentation"],assessment:["Pupil graph","Oral questions"],aids:["Graph paper","Colour pencils"]}
+  ],
+
+  "YEAR 5": [
+    {standards:"5.1 Numbers up to 1,000,000.",objectives:"Pupils can read numbers up to one million.",activities:["Number cards","Whiteboard tasks","Written work"],assessment:["Oral questions","Exercises"],aids:["Number chart","Textbook"]},
+    {standards:"5.2 Mixed operations.",objectives:"Pupils can solve mixed operations.",activities:["Pair work","Quick quiz","Individual practice"],assessment:["Worksheets","Written tasks"],aids:["Flashcards","Whiteboard"]},
+    {standards:"5.3 Percentage & discount.",objectives:"Pupils can calculate discounted prices.",activities:["Shop simulation","Role play","Exercises"],assessment:["Individual work","Quiz"],aids:["Price tags","Calculator"]},
+    {standards:"5.4 Ratio & rate.",objectives:"Pupils can solve basic ratio problems.",activities:["Group work","Whiteboard demo","Exercises"],assessment:["Written tasks","Class discussion"],aids:["Ratio cards","Textbook"]},
+    {standards:"5.5 Area & volume.",objectives:"Pupils can calculate cube volume.",activities:["3D model","Group tasks","Exercises"],assessment:["Worksheets","Individual work"],aids:["3D models","Ruler"]},
+    {standards:"5.6 Basic statistics.",objectives:"Pupils can calculate mean & median.",activities:["Class data collection","Calculate mean/median","Exercises"],assessment:["Written tasks","Presentation"],aids:["Graph paper","Calculator"]}
+  ],
+
+  "YEAR 6": [
+    {standards:"6.1 Numbers up to 10,000,000.",objectives:"Pupils can read and write very large numbers.",activities:["Number cards","Textbook tasks","Individual work"],assessment:["Written tasks","Oral questions"],aids:["Number chart","Textbook"]},
+    {standards:"6.2 Algebraic expressions.",objectives:"Pupils can write simple algebraic expressions.",activities:["Situation problems","Whiteboard demo","Group work"],assessment:["Worksheets","Oral Q&A"],aids:["Flashcards","Projector"]},
+    {standards:"6.3 Complex fractions.",objectives:"Pupils can solve operations with fractions.",activities:["Group work","Individual tasks","Written exercises"],assessment:["Individual work","Discussion"],aids:["Fraction cards","Textbook"]},
+    {standards:"6.4 Advanced percentages/ratio/rate.",objectives:"Pupils can solve rate problems.",activities:["Daily life examples","Group tasks","Exercises"],assessment:["Quick quiz","Individual work"],aids:["Rate cards","Calculator"]},
+    {standards:"6.5 Geometric transformations.",objectives:"Pupils can draw reflection & rotation.",activities:["Demo reflection","Drawing practice","Group tasks"],assessment:["Drawing output","Oral Q&A"],aids:["Graph paper","Geometry set"]},
+    {standards:"6.6 Data & probability.",objectives:"Pupils can determine simple probability.",activities:["Dice game","Collect data","Exercises"],assessment:["Written tasks","Discussion"],aids:["Dice","Coins","Graph paper"]}
+  ]
+};
+
+/* =======================
+   3) Takwim Sekolah 2025
+   ======================= */
+const TAKWIM = [
+  ["2025-02-17","2025-02-28"],
+  ["2025-03-01","2025-03-31"],
+  ["2025-04-01","2025-04-30"],
+  ["2025-05-01","2025-05-28"],
+  ["2025-06-10","2025-06-30"],
+  ["2025-07-01","2025-07-31"],
+  ["2025-08-01","2025-08-31"],
+  ["2025-09-01","2025-09-12"],
+  ["2025-09-22","2025-09-30"],
+  ["2025-10-01","2025-10-31"],
+  ["2025-11-01","2025-11-30"],
+  ["2025-12-01","2025-12-19"]
+];
+
+/* =======================
+   4) Util Tarikh & Minggu
+   ======================= */
+const HARI_MS=["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+const HARI_EN={"Isnin":"MONDAY","Selasa":"TUESDAY","Rabu":"WEDNESDAY","Khamis":"THURSDAY","Jumaat":"FRIDAY"};
+
+function* workingDatesInCalendar(){
+  for(const [s,e] of TAKWIM){
+    let d=new Date(s),end=new Date(e);
+    while(d<=end){const day=d.getDay();if(day!==0&&day!==6){yield new Date(d);}d.setDate(d.getDate()+1);}
+  }
+}
+function computeWeekNumbers(dates){let week=1;return dates.map((d,i)=>{if(i!==0&&d.getDay()===1)week++;return{date:d,week};});}
+function fmtDateMS(date){return date.toLocaleDateString("ms-MY",{weekday:"long",year:"numeric",month:"long",day:"numeric"});}
+
+/* =======================
+   6) Generate RPH
+   ======================= */
+const output=document.getElementById("output");
+const genBtn=document.getElementById("genBtn");
+const subjectSel=document.getElementById("subject");
+const yearSel=document.getElementById("year");
+const mingguSel=document.getElementById("mingguSelect");
+
+genBtn.addEventListener("click",generateRPH);
+document.getElementById("printWeekBtn").addEventListener("click",()=>{const w=parseInt(mingguSel.value||"0");const nodes=[...document.querySelectorAll(`.rph[data-week='${w}']`)];printNodes(nodes);});
+mingguSel.addEventListener("change",filterByWeek);
+
+function generateRPH(){
+  const subject=subjectSel.value;
+  const year=yearSel.value;
+  if(subject!=="Mathematics"){alert("Buat masa ini, kandungan hanya untuk Mathematics.");return;}
+  output.innerHTML="";
+  const masaMap={};
+  document.querySelectorAll("input[data-hari]").forEach(inp=>{if(inp.value&&inp.value.trim()!==""){masaMap[inp.dataset.hari]=inp.value.trim();}});
+  const dates=[...workingDatesInCalendar()];
+  const datedWeeks=computeWeekNumbers(dates);
+  const maxWeek=datedWeeks.at(-1).week;
+  mingguSel.innerHTML="";
+  for(let i=1;i<=maxWeek;i++){const opt=document.createElement("option");opt.value=i;opt.textContent="Minggu "+i;mingguSel.appendChild(opt);}
+  const units=MATH_UNITS[year];
+  const pool=MATH_POLLS[year];
+  const weekToUnit={};
+  for(let w=1;w<=maxWeek;w++){weekToUnit[w]=units[(w-1)%units.length];}
+  datedWeeks.forEach(({date,week})=>{
+    const hari=HARI_MS[date.getDay()];
+    if(hari==="Ahad"||hari==="Sabtu")return;
+    const masa=masaMap[hari];
+    if(!masa)return;
+    const weeklyTopic=weekToUnit[week];
+    const variant=pool[(week+date.getDay())%pool.length];
+    const node=renderRPH({subject:"Mathematics",yearNum:parseInt(year.replace(/\D/g,""))||"",dayEN:HARI_EN[hari],time:masa,week,weeklyTopic,dateStr:fmtDateMS(date),...variant});
+    node.dataset.week=week;
+    output.appendChild(node);
+  });
+  mingguSel.value="1";
+  filterByWeek();
+}
+
+/* =======================
+   7) Renderer RPH
+   ======================= */
+function renderList(items){return `<ul>${items.map(i=>`<li>${escapeHTML(i)}</li>`).join("")}</ul>`;}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function renderRPH(data){
+  const wrap=document.createElement("div");
+  wrap.className="rph";
+  wrap.innerHTML=`
+    <div class="rph-header">
+      <div class="rph-title">DAILY LESSON PLAN (DLP)</div>
+      <div style="text-align:right;font-weight:700;color:#1e293b">Week: ${data.week}</div>
+      <div class="kv">
+        <b>Subject:</b><div>${escapeHTML(data.subject)}</div>
+        <b>Year:</b><div>${escapeHTML(data.yearNum)}</div>
+        <b>Day:</b><div>${escapeHTML(data.dayEN)}</div>
+        <b>Time:</b><div>${escapeHTML(data.time)}</div>
+      </div>
+      <div class="kv">
+        <b>Weekly Topic:</b><div>${escapeHTML(data.weeklyTopic)}</div>
+        <b>Date:</b><div>${escapeHTML(data.dateStr)}</div>
+      </div>
+    </div>
+    <div class="section"><h4>Learning Standards</h4><div class="muted">${escapeHTML(data.standards)}</div></div>
+    <div class="section"><h4>Learning Objectives</h4><div>${escapeHTML(data.objectives)}</div></div>
+    <div class="section"><h4>Teaching & Learning Activities</h4>${renderList(data.activities)}</div>
+    <div class="section"><h4>Assessment</h4>${renderList(data.assessment)}</div>
+    <div class="section"><h4>Teaching Aids</h4>${renderList(data.aids)}</div>
+    <div class="section"><h4>Reflection</h4><div class="muted">………………………………………………………………………………………………………………………………………………………………</div></div>
+    <div class="footer-line hide-print"><button class="btn ghost" onclick="printNodes([this.closest('.rph')])">Cetak RPH Ini</button></div>
+  `;
+  return wrap;
+}
+
+// Butang HANTAR → buka pautan Google Apps Script
+document.getElementById("sendBtn").addEventListener("click", () => {
+  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec", "_blank");
+});
+
+/* =======================
+   8) Cetak & Tapis
+   ======================= */
+function filterByWeek(){const w=parseInt(mingguSel.value||"0");document.querySelectorAll(".rph").forEach(node=>{node.style.display=(parseInt(node.dataset.week)===w)?"":"none";});}
+function printNodes(nodes){
+  if(!nodes||nodes.length===0){alert("Tiada RPH untuk dicetak.");return;}
+  const sand=document.getElementById("printSandbox");
+  sand.innerHTML="";
+  const seen=new Set();
+  nodes.forEach(n=>{
+    const key=[n.dataset.week,n.querySelector(".kv b+div")?.textContent,n.querySelector(".kv b+div+b+div")?.textContent,n.querySelectorAll(".kv b+div")[2]?.textContent,n.querySelectorAll(".kv b+div")[3]?.textContent,n.querySelectorAll(".kv b+div")[5]?.textContent].join("|");
+    if(!seen.has(key)){const clone=n.cloneNode(true);const btn=clone.querySelector(".footer-line");if(btn)btn.remove();clone.style.display="";sand.appendChild(clone);seen.add(key);}
+  });
+  document.body.classList.add("printing");
+  const cleanup=()=>{document.body.classList.remove("printing");sand.innerHTML="";};
+  const onAfter=()=>{cleanup();window.removeEventListener("afterprint",onAfter);};
+  window.addEventListener("afterprint",onAfter,{once:true});
+  window.print();
+  setTimeout(()=>{if(document.body.classList.contains("printing"))cleanup();},1500);
+}
+(function initWeekDropdown(){mingguSel.innerHTML="";for(let i=1;i<=42;i++){const o=document.createElement("option");o.value=i;o.textContent="Minggu "+i;mingguSel.appendChild(o);}})();
+</script>
+</body>
+</html>
