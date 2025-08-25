@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistem RPH — Bahasa Melayu (Print-Safe)</title>
+  <style>
+    :root{
+      --brand:#1d4ed8;
+      --brand-light:#60a5fa;
+      --ink:#111827;
+      --muted:#6b7280;
+      --panel:#ffffff;
+      --line:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      margin:0; background:#f3f4f6; color:var(--ink);
+      line-height:1.6;
+    }
+    header{
+      background: linear-gradient(135deg, #fff9c4, #fde047, #ca8a04);
+      color:#fff; padding:28px 16px; text-align:center;
+      box-shadow:0 2px 6px rgba(0,0,0,.15);
+    }
+    header h1{margin:0 0 6px;font-weight:700;font-size:1.8rem}
+    header p{margin:0;opacity:.95;font-size:1rem}
+    main{max-width:1100px;margin:20px auto;padding:0 16px 50px}
+    .card{
+      background:var(--panel); border:1px solid var(--line);
+      border-radius:14px; padding:22px;
+      box-shadow:0 6px 24px rgba(0,0,0,.06);
+    }
+    .row{display:flex;flex-wrap:wrap;gap:16px}
+    .row > *{flex:1 1 220px}
+    label{font-weight:600;color:var(--muted);font-size:.95rem;display:block;margin-bottom:4px}
+    select, input[type="text"]{
+      width:100%; padding:10px 12px; border:1px solid var(--line);
+      border-radius:10px; background:#fff; font-size:14px;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    select:focus, input[type="text"]:focus{
+      border-color:var(--brand); box-shadow:0 0 0 2px rgba(29,78,216,.15);
+      outline:none;
+    }
+    table{
+      width:100%; border-collapse:collapse; margin-top:10px; background:#fff;
+      border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    }
+    th, td{padding:10px 12px; border-bottom:1px solid var(--line); text-align:left}
+    th{background:#f9fafb;font-weight:700;color:var(--ink)}
+    tr:last-child td{border-bottom:none}
+    .btn{
+      display:inline-block; padding:10px 16px; border-radius:10px; border:1px solid transparent;
+      background:var(--brand); color:#fff; cursor:pointer; font-weight:600;
+      box-shadow:0 4px 12px rgba(29,78,216,.3); transition:.15s;
+    }
+    .btn.secondary{background:#0284c7}
+    .btn.ghost{background:#fff;color:var(--brand);border-color:var(--brand);box-shadow:none}
+    .btn:hover{transform:translateY(-1px);}
+    .toolbar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:14px}
+    #output{margin-top:22px}
+
+    .rph{
+      background:#fff; border:1px solid var(--line); border-radius:14px;
+      padding:22px 22px 16px; margin:18px 0; box-shadow:0 4px 14px rgba(0,0,0,.06);
+      page-break-after:always;
+    }
+    .rph-header{
+      display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; align-items:center;
+      border-bottom:2px solid var(--line); padding-bottom:12px; margin-bottom:12px;
+    }
+    .rph-title{font-size:1.15rem; font-weight:800; letter-spacing:.3px;color:var(--brand)}
+    .kv{display:grid; grid-template-columns:140px 1fr; gap:2px 10px; font-size:.94rem}
+    .kv b{color:var(--ink)}
+    .section{margin-top:12px;}
+    .section h4{
+      margin:12px 0 6px; font-size:1rem; color:var(--ink); position:relative; padding-left:12px;
+    }
+    .section h4:before{
+      content:""; position:absolute; left:0; top:4px; bottom:4px; width:3px; background:var(--brand); border-radius:3px;
+    }
+    ul{margin:6px 0 0 18px}
+    .muted{color:var(--muted)}
+    .footer-line{border-top:1px dashed var(--line); margin-top:12px; padding-top:10px; display:flex; justify-content:flex-end; gap:10px}
+
+    #printSandbox{display:none}
+    .hide-print{}
+    @media print{
+      @page{ size:A4; margin:12mm; }
+      body{background:#fff}
+      body.printing *{ visibility:hidden !important; }
+      body.printing #printSandbox,
+      body.printing #printSandbox *{ visibility:visible !important; }
+      body.printing #printSandbox{ display:block !important; position:absolute; left:0; top:0; width:100%; }
+      body.printing .rph{ page-break-after:always; }
+      body.printing .rph:last-child{page-break-after:auto}
+      .hide-print{display:none !important}
+    }
+  </style>
+</head>
+<body>
+<header class="hide-print">
+  <h1>Sistem Rancangan Pengajaran Harian - BAHASA MELAYU</h1>
+  <p>Auto-generate RPH mengikut takwim sekolah (2025)</p>
+</header>
+
+<main>
+  <div class="card hide-print">
+    <div class="row">
+      <div>
+        <label for="subject">Mata Pelajaran</label>
+        <select id="subject">
+          <option>BAHASA MELAYU</option>
+        </select>
+      </div>
+      <div>
+        <label for="year">Tahun</label>
+        <select id="year">
+          <option>TAHUN 1</option><option>TAHUN 2</option><option>TAHUN 3</option>
+          <option>TAHUN 4</option><option>TAHUN 5</option><option>TAHUN 6</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <div style="flex:1 1 100%">
+        <label>Jadual (Isikan Masa)</label>
+        <table>
+          <thead><tr><th>Hari</th><th>Masa</th></tr></thead>
+          <tbody id="jadualBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+<div class="toolbar">
+  <button class="btn" id="genBtn">HASILKAN RPH</button>
+  <div class="filters">
+    <label for="mingguSelect">Minggu</label>
+    <select id="mingguSelect" style="min-width:120px"></select>
+  </div>
+  <button class="btn secondary" id="printWeekBtn">Cetak Minggu Dipilih</button>
+  <button class="btn ghost" id="sendBtn">HANTAR</button>
+</div>
+
+  <div id="output"></div>
+</main>
+
+<div id="printSandbox" aria-hidden="true"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const jadualBody = document.getElementById("jadualBody");
+  ["Isnin","Selasa","Rabu","Khamis","Jumaat"].forEach(h=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td style="width:160px"><b>${h}</b></td>
+                    <td><input type="text" placeholder="cth: 7:10 – 8:10" data-hari="${h}"></td>`;
+    jadualBody.appendChild(tr);
+  });
+});
+
+/* =======================
+   1) Data: Unit Mingguan
+   ======================= */
+const MY_UNITS = {
+"TAHUN 1": [
+  "Unit 1: Keluarga Saya",
+  "Unit 2: Sekolah Saya",
+  "Unit 3: Rakan dan Guru",
+  "Unit 4: Kebersihan Diri",
+  "Unit 5: Makanan Sihat",
+  "Unit 6: Perayaan",
+  "Unit 7: Haiwan Di Sekitar",
+  "Unit 8: Keselamatan Jalan Raya",
+  "Unit 9: Hobi Saya",
+  "Unit 10: Cerita Rakyat"
+],
+
+"TAHUN 2": [
+  "Unit 1: Diri Saya",
+  "Unit 2: Bilik Darjah Ceria",
+  "Unit 3: Rutin Harian",
+  "Unit 4: Alam Sekitar",
+  "Unit 5: Makanan & Kesihatan",
+  "Unit 6: Keselamatan",
+  "Unit 7: Kenderaan",
+  "Unit 8: Sukan & Rekreasi",
+  "Unit 9: Perayaan Malaysia",
+  "Unit 10: Cerita Haiwan"
+],
+
+"TAHUN 3": [
+  "Unit 1: Komuniti Saya",
+  "Unit 2: Di Bandar dan Desa",
+  "Unit 3: Amalan Kebersihan",
+  "Unit 4: Keselamatan Diri",
+  "Unit 5: Teknologi Harian",
+  "Unit 6: Warisan & Budaya",
+  "Unit 7: Alam Semula Jadi",
+  "Unit 8: Sukan & Permainan",
+  "Unit 9: Perpustakaan",
+  "Unit 10: Cerita Teladan"
+],
+
+"TAHUN 4": [
+  "Unit 1: Jati Diri",
+  "Unit 2: Kesihatan & Kebersihan",
+  "Unit 3: Alam Sekitar Lestari",
+  "Unit 4: Teknologi & Inovasi",
+  "Unit 5: Kesenian & Budaya",
+  "Unit 6: Keselamatan & Disiplin",
+  "Unit 7: Keusahawanan",
+  "Unit 8: Sukan & Kecergasan",
+  "Unit 9: Warisan Negara",
+  "Unit 10: Sastera Kanak-kanak"
+],
+
+"TAHUN 5": [
+  "Unit 1: Jati Diri & Kepimpinan",
+  "Unit 2: Kesihatan & Gaya Hidup",
+  "Unit 3: Alam Sekitar & Lestari",
+  "Unit 4: Sains & Teknologi",
+  "Unit 5: Kewarganegaraan",
+  "Unit 6: Ekonomi & Keusahawanan",
+  "Unit 7: Kebudayaan & Sastera",
+  "Unit 8: Sukan & Rekreasi",
+  "Unit 9: Komunikasi Digital",
+  "Unit 10: Aspirasi Masa Depan"
+],
+
+"TAHUN 6": [
+  "Unit 1: Kepimpinan & Tanggungjawab",
+  "Unit 2: Nilai Murni & Jati Diri",
+  "Unit 3: Inovasi & Teknologi",
+  "Unit 4: Sejarah & Warisan",
+  "Unit 5: Alam & Kelestarian",
+  "Unit 6: Kesihatan Komuniti",
+  "Unit 7: Komunikasi & Media",
+  "Unit 8: Kewangan & Keusahawanan",
+  "Unit 9: Wawasan & Aspirasi",
+  "Unit 10: Sastera Remaja"
+]
+};
+
+/* ==============================================================
+   2) POOLS_BM kandungan berbeza bagi setiap Tahun (variasi dijamin)
+   ============================================================== */
+const POOLS_BM = {
+  "TAHUN 1": [
+    {
+    standards: "Mendengar & Bertutur: sebutan betul KV+KVK; sapaan asas. Membaca: kenal huruf/ suku kata terbuka. Menulis: salin perkataan mudah. Tatabahasa: kata nama am.",
+    objectives: "Murid menyebut dan membaca 10 perkataan KV/ KVK serta menyalin 5 perkataan dengan betul.",
+    activities: ["Latihan fonik (tepuk suku kata)", "Padankan gambar–perkataan", "Menyalin perkataan ke buku tulis"],
+    assessment: ["Senarai semak sebutan", "Semakan ejaan dalam buku tulis"],
+    aids: ["Kad imbas huruf", "Gambar objek bilik darjah", "Papan putih"]
+  },
+  {
+    standards: "Mendengar arahan satu langkah. Membaca frasa mudah. Menulis ayat mudah berpandu. Tatabahasa: kata kerja asas.",
+    objectives: "Murid mematuhi 3 arahan mudah dan menulis 3 ayat mudah tentang kelas.",
+    activities: ["TPR: 'Buka buku, berdiri, duduk'", "Bacaan bergilir frasa mudah", "Tulis 3 ayat tentang kelas"],
+    assessment: ["Pemerhatian TPR", "Semakan 3 ayat"],
+    aids: ["Kad arahan", "Lembaran frasa", "Carta kata kerja"]
+  },
+  {
+    standards: "Kosa kata ahli keluarga. Membaca ayat penyata. Menulis frasa milik (ayah saya). Tatabahasa: kata ganti nama.",
+    objectives: "Murid memperkenal 4 ahli keluarga dan menulis 4 frasa milik.",
+    activities: ["Persembahan ringkas keluarga", "Padankan gambar–label", "Tulis 'Ini … saya' (4 frasa)"],
+    assessment: ["Rubrik lisan ringkas", "Semakan frasa milik"],
+    aids: ["Gambar keluarga", "Kad label", "Papan kenyataan"]
+  },
+  {
+    standards: "Mendengar cerita pendek. Memahami idea utama. Menyalin ayat dengan tanda noktah.",
+    objectives: "Murid menyatakan idea utama cerita dan menyalin 2 ayat dengan noktah betul.",
+    activities: ["Dengar & jawab: siapa/di mana", "Susun kad ayat", "Salin 2 ayat"],
+    assessment: ["Soal jawab lisan", "Semakan tanda noktah"],
+    aids: ["Buku cerita bergambar", "Kad ayat", "Projektor"]
+  },
+  {
+    standards: "Perbendaharaan kata makanan. Membaca menu ringkas. Menulis ayat 'saya suka'.",
+    objectives: "Murid menyebut 6 makanan dan menulis 3 ayat 'Saya suka …'.",
+    activities: ["Bingo makanan", "Bacaan menu ringkas", "Tulis 3 ayat pilihan"],
+    assessment: ["Semak sebutan bingo", "Semakkan 3 ayat"],
+    aids: ["Kad gambar makanan", "Menu bergambar", "Kertas A4"]
+  },
+  {
+    standards: "Keselamatan jalan raya: kosa kata papan tanda. Bertutur ayat arahan sopan. Menulis frasa larangan.",
+    objectives: "Murid menerangkan maksud 3 papan tanda dan menulis 3 frasa larangan.",
+    activities: ["Lawatan maya papan tanda", "Main peranan lintas jalan", "Tulis 'Jangan …' (3)"],
+    assessment: ["Senarai semak role-play", "Semakan frasa larangan"],
+    aids: ["Poster JPJ bergambar", "Zebra crossing mini", "Kad larangan"]
+  },
+  {
+    standards: "Tatabahasa: imbuhan awalan meN- (pendedahan awal). Membaca kata berimbuhan mudah. Menulis ayat ringkas.",
+    objectives: "Murid mengenal 4 kata berimbuhan meN- dan membina 2 ayat.",
+    activities: ["Sort kad kata dasar → meN-", "Bacaan beramai-ramai", "Bina 2 ayat berpandu"],
+    assessment: ["Kuiz kad pantas", "Semak dua ayat"],
+    aids: ["Kad imbuhan", "Carta imbuhan", "Whiteboard mini"]
+  },
+  {
+    standards: "Seni bahasa: rima mudah; sebutan ritma. Menyalin rangkap pendek. Adab mendengar.",
+    objectives: "Murid melagukan rangkap mudah dan menyalin 2 baris tanpa salah ejaan.",
+    activities: ["Nyanyi/chant rangkap", "Isi tempat kosong rima", "Salin 2 baris"],
+    assessment: ["Pemerhatian sebutan", "Semakan salinan"],
+    aids: ["Lirik besar", "Audio ringkas", "Lembaran isi tempat kosong"]
+  }
+],
+
+  "TAHUN 2": [
+    {
+    standards: "Mendengar: arahan dua langkah. Bertutur: ayat lengkap dengan intonasi. Membaca: ayat majmuk mudah. Menulis: tanda baca (., ?).",
+    objectives: "Murid mematuhi 2 arahan berturutan, membaca ayat majmuk mudah dan menulis 4 ayat dengan tanda baca betul.",
+    activities: ["TPR dua langkah", "Bacaan sebutan + intonasi", "Tulis 4 ayat (2 penyata, 2 tanya)"],
+    assessment: ["Pemerhatian TPR", "Semakan tanda baca"],
+    aids: ["Kad arahan bergambar", "Kad tanda baca", "Lembaran latihan"]
+  },
+  {
+    standards: "Kosa kata rutin harian. Penanda waktu (pagi, petang). Kata kerja seharian.",
+    objectives: "Murid menceritakan rutin dan menulis 5 ayat tentang harian.",
+    activities: ["Jadual gambar → cerita", "Permainan garis masa", "Tulis 5 ayat"],
+    assessment: ["Rubrik lisan", "Semakan karangan 5 ayat"],
+    aids: ["Kad gambar rutin", "Carta masa", "Sticker penanda"]
+  },
+  {
+    standards: "Membaca petikan dengan kata hubung dan, atau. Menulis ayat majmuk setara.",
+    objectives: "Murid mengesan kata hubung dan membina 3 ayat majmuk setara.",
+    activities: ["Highlight kata hubung", "Jambatan ayat (sambung frasa)", "Bina 3 ayat"],
+    assessment: ["Kuiz sorok kata hubung", "Semakan binaan ayat"],
+    aids: ["Petikan ringkas", "Kad frasa", "Pen penanda"]
+  },
+  {
+    standards: "Tatabahasa: kata adjektif asas. Membaca ayat deskriptif. Menulis frasa adjektif.",
+    objectives: "Murid menggunakan 6 kata adjektif untuk menerang objek/orang.",
+    activities: ["Galeri gambar → sebut adjektif", "Padankan objek–adjektif", "Tulis 6 frasa adjektif"],
+    assessment: ["Senarai semak kosa kata", "Semakan frasa"],
+    aids: ["Galeri foto", "Kad adjektif", "Papan magnet"]
+  },
+  {
+    standards: "Pemahaman: idea utama + maklumat tersurat. Penyoalan literal.",
+    objectives: "Murid menjawab 5 soalan literal berdasarkan petikan.",
+    activities: ["Baca–jawab siapa/di mana", "Cari bukti dalam teks", "Isikan peta minda"],
+    assessment: ["Lembaran pemahaman", "Semak peta minda"],
+    aids: ["Petikan mudah", "Peta minda kosong", "Highlighter"]
+  },
+  {
+    standards: "Penulisan: kad ucapan/nota ringkas. Etika bahasa sopan.",
+    objectives: "Murid menghasilkan 1 kad ucapan dengan format mudah.",
+    activities: ["Analisis contoh kad", "Draf → semak rakan sebaya", "Hasil akhir & pembentangan"],
+    assessment: ["Rubrik ringkas kad ucapan", "Maklum balas rakan"],
+    aids: ["Templat kad", "Contoh baik", "Set pelekat hiasan"]
+  },
+  {
+    standards: "Imbuhan apitan peN-…-an/ ke-…-an (pengenalan). Kosa kata baharu.",
+    objectives: "Murid mengenal 6 kata berimbuhan dan menggunakannya dalam 3 ayat.",
+    activities: ["Sort imbuhan", "Bina kata dari dasar", "Tulis 3 ayat"],
+    assessment: ["Kuiz kad pantas", "Semakan ayat"],
+    aids: ["Kad imbuhan", "Carta proses", "Whiteboard mini"]
+  },
+  {
+    standards: "Seni bahasa: peribahasa mudah (ringan tulang, rajin). Nilai murni.",
+    objectives: "Murid menjelaskan maksud 2 peribahasa melalui contoh situasi.",
+    activities: ["Teka maksud melalui gambar", "Lakonan ringkas", "Lukis poster peribahasa"],
+    assessment: ["Rubrik lakonan", "Penilaian poster"],
+    aids: ["Kad peribahasa", "Gambar situasi", "Kertas A3"]
+  }
+],
+
+  "TAHUN 3": [
+    {
+    standards: "Mendengar: isi penting daripada rakaman. Bertutur: laporan lisan ringkas. Membaca: perenggan dengan intonasi. Menulis: ayat majmuk.",
+    objectives: "Murid mengenal pasti 3 isi penting dan menyampaikan laporan 3–4 ayat.",
+    activities: ["Dengar klip pendek", "Catat isi pada sticky notes", "Lapor lisan 1 minit"],
+    assessment: ["Senarai semak isi penting", "Rubrik laporan lisan"],
+    aids: ["Rakaman audio", "Sticky notes", "Timer"]
+  },
+  {
+    standards: "Tatabahasa: kata hubung (kerana, tetapi). Penanda wacana: oleh itu, seterusnya.",
+    objectives: "Murid membina 4 ayat menggunakan kerana/tetapi/oleh itu.",
+    activities: ["Sambung dua klausa", "Kerusi muzik frasa", "Edit ayat (tambah penanda)"],
+    assessment: ["Kuiz 4 item", "Semak penanda wacana"],
+    aids: ["Kad klausa", "Muzik ringkas", "Lembaran edit"]
+  },
+  {
+    standards: "Pemahaman: maklumat tersurat & tersirat mudah. Soalan aras rendah-sederhana.",
+    objectives: "Murid menjawab 6 soalan (4 literal, 2 inferens mudah).",
+    activities: ["Baca teks maklumat", "Bukti dalam teks", "Diskusi 'mengapa'"],
+    assessment: ["Lembaran 6 soalan", "Semak rakan sebaya"],
+    aids: ["Teks maklumat", "Pen penanda", "Rubrik ringkas"]
+  },
+  {
+    standards: "Penulisan: perenggan deskriptif (tempat). Adjektif & frasa sendi.",
+    objectives: "Murid menulis 1 perenggan (5–6 ayat) tentang tempat.",
+    activities: ["Galeri foto tempat", "Peta kata adjektif", "Draf → semak → muktamad"],
+    assessment: ["Rubrik perenggan", "Semakan guru"],
+    aids: ["Foto tempat", "Peta kata A3", "Kamus dinding"]
+  },
+  {
+    standards: "Imbuhan: meN-, di-, ter-, peN-. Bentuk kata & ejaan.",
+    objectives: "Murid membentuk 8 kata berimbuhan dan guna 4 dalam ayat.",
+    activities: ["Stesen imbuhan", "Lumba bina kata", "Ayat pilihan 4 kata"],
+    assessment: ["Skor stesen", "Semak ayat"],
+    aids: ["Kad imbuhan", "Stesen berlabel", "Papan magnet"]
+  },
+  {
+    standards: "Seni bahasa: simile mudah (seperti/bagai). Peribahasa asas.",
+    objectives: "Murid guna 2 simile tepat dalam karangan pendek.",
+    activities: ["Padankan simile–gambar", "Tukar ayat literal → simile", "Karangan 4 ayat dengan 2 simile"],
+    assessment: ["Semak penggunaan simile", "Rubrik mini karangan"],
+    aids: ["Kad simile", "Gambar situasi", "Lembaran karangan"]
+  },
+  {
+    standards: "Pemahaman grafik: peta/ carta ringkas. Menyimpul isi.",
+    objectives: "Murid mengekstrak 5 fakta dan menulis rumusan 2 ayat.",
+    activities: ["Baca peta minda", "Isi jadual fakta", "Rumusan 2 ayat"],
+    assessment: ["Semak 5 fakta", "Semak rumusan"],
+    aids: ["Grafik peta/carta", "Jadual kosong", "Pen penanda"]
+  },
+  {
+    standards: "Lisan: etika bertanya & menjawab. Bahasa sopan.",
+    objectives: "Murid mengajukan 2 soalan relevan dan menjawab dengan sopan.",
+    activities: ["Think-Pair-Share", "Kerusi panas (hot seat)", "Refleksi lisan"],
+    assessment: ["Rubrik soal jawab", "Catatan anekdot"],
+    aids: ["Kad peranan", "Jam pasir kecil", "Senarai ungkapan sopan"]
+  }
+],
+
+  "TAHUN 4": [
+    {
+    standards: "Membaca: idea utama & butiran. Menulis: karangan deskriptif 2 perenggan. Tatabahasa: kata adjektif & sendi.",
+    objectives: "Murid menghasilkan deskripsi 2 perenggan (5–6 ayat setiap satu) dengan adjektif tepat.",
+    activities: ["Analisis contoh model", "Peta kata → ayat", "Draf–Semak–Edit"],
+    assessment: ["Rubrik karangan 10 markah", "Semakan rakan sebaya"],
+    aids: ["Model teks", "Peta kata", "Senarai semak"]
+  },
+  {
+    standards: "Tatabahasa: kata ganda, kata majmuk. Ejaan & tanda baca.",
+    objectives: "Murid membezakan 8 contoh kata ganda/majmuk dan membina 4 ayat.",
+    activities: ["Sort & padankan", "Lumba ayat betul", "Kuiz Kahoot/lembaran"],
+    assessment: ["Skor kuiz", "Semakan ayat"],
+    aids: ["Kad contoh", "Lembaran kuiz", "Projektor (opsyen)"]
+  },
+  {
+    standards: "Pemahaman: inferens mudah, sebab–akibat. Penanda wacana.",
+    objectives: "Murid menjawab 8 soalan (5 literal, 3 inferens) dgn bukti teks.",
+    activities: ["Baca–garis bukti", "Diskusi sebab–akibat", "Catat petikan + bukti"],
+    assessment: ["Lembaran Q&A", "Semak bukti digaris"],
+    aids: ["Petikan maklumat", "Highlighter", "Carta sebab–akibat"]
+  },
+  {
+    standards: "Penulisan: surat tidak rasmi ringkas. Format & bahasa sopan.",
+    objectives: "Murid menulis 1 surat 3 perenggan (pembuka, isi, penutup).",
+    activities: ["Bedah surat contoh", "Rangka surat (point form)", "Draf → Semak → Cantik"],
+    assessment: ["Rubrik format & bahasa", "Senarai semak rakan"],
+    aids: ["Contoh surat", "Templat rangka", "Senarai frasa sopan"]
+  },
+  {
+    standards: "Imbuhan: ke-, -kan, -i; peN-; per-; kata terbitan tepat.",
+    objectives: "Murid membentuk 10 kata terbitan & guna 5 dalam karangan.",
+    activities: ["Stesen imbuhan", "Permainan roda imbuhan", "Masukkan ke ayat"],
+    assessment: ["Lembaran 10 item", "Semak karangan"],
+    aids: ["Kad imbuhan", "Roda kata", "Lembaran latihan"]
+  },
+  {
+    standards: "Seni bahasa: peribahasa tahap sederhana; simile & personifikasi.",
+    objectives: "Murid memasukkan 1 peribahasa & 1 gaya bahasa dalam perenggan.",
+    activities: ["Padan peribahasa–maksud", "Ubah ayat literal → personifikasi", "Perenggan 6 ayat"],
+    assessment: ["Semak ketepatan makna", "Rubrik perenggan"],
+    aids: ["Kad peribahasa", "Lembaran gaya bahasa", "Senarai semak"]
+  },
+  {
+    standards: "Pemahaman grafik: carta bar/garis. Rumusan maklumat.",
+    objectives: "Murid menafsir 2 graf & menulis rumusan 3–4 ayat.",
+    activities: ["Baca graf kelas", "Soal jawab berpandu", "Tulis rumusan"],
+    assessment: ["Lembaran tafsiran", "Semak rumusan"],
+    aids: ["Grafik dicetak", "Jadual kosong", "Pen penanda"]
+  },
+  {
+    standards: "Lisan: perbincangan kumpulan kecil; giliran bertutur; adab berbincang.",
+    objectives: "Murid menyumbang sekurang-kurangnya 2 idea dengan bahasa sopan.",
+    activities: ["Think–Pair–Share", "Perbincangan 4 orang", "Pembentangan ringkas"],
+    assessment: ["Rubrik sumbangan idea", "Catatan anekdot"],
+    aids: ["Kad peranan", "Bell timer", "Rubrik"]
+  }
+],
+
+  "TAHUN 5": [
+   { 
+    standards: "Pemahaman: inferens & menilai; bukti tekstual. Penanda wacana pelbagai.",
+    objectives: "Murid menjawab 10 soalan (6 literal, 4 inferens/menilai) beserta bukti.",
+    activities: ["Annotate teks", "Bincang bukti–jawapan", "Peer review jawapan berasas bukti"],
+    assessment: ["Lembaran 10 soalan", "Semakan bukti digaris"],
+    aids: ["Teks maklumat", "Highlighter", "Rubrik jawapan"]
+  },
+  {
+    standards: "Penulisan: karangan berformat (ucapan). Struktur pendahuluan–isi–penutup.",
+    objectives: "Murid menulis teks ucapan 3 perenggan dengan penanda wacana.",
+    activities: ["Analisis ucapan contoh", "Rangka isi", "Draf → semak → muktamad"],
+    assessment: ["Rubrik format & koheren", "Maklum balas rakan"],
+    aids: ["Contoh ucapan", "Senarai frasa retorik", "Templat rangka"]
+  },
+  {
+    standards: "Tatabahasa: kata sendi, kata hubung pancangan (walaupun, kerana, apabila).",
+    objectives: "Murid membina 6 ayat kompleks menggunakan kata hubung sesuai.",
+    activities: ["Kad klausa utama/anak", "Sambung & semak", "Edit ayat tidak gramatis"],
+    assessment: ["Kuiz bina ayat", "Semak rakan sebaya"],
+    aids: ["Kad klausa", "Lembaran edit", "Papan magnet"]
+  },
+  {
+    standards: "Imbuhan: peN-, per-, ke-, se-, -kan, -i; penggolongan kata tepat.",
+    objectives: "Murid membentuk 12 kata terbitan & menggunakan 6 dalam karangan.",
+    activities: ["Stesen imbuhan", "Bingo imbuhan", "Karangan mini 6 ayat"],
+    assessment: ["Skor stesen", "Semakan karangan"],
+    aids: ["Kad imbuhan", "Lembaran bingo", "Senarai semak"]
+  },
+  {
+    standards: "Seni bahasa: peribahasa / simpulan bahasa; gaya bahasa (metafora).",
+    objectives: "Murid menerangkan maksud 3 peribahasa & gunakan 1 dalam perenggan.",
+    activities: ["Padan peribahasa–situasi", "Lakonan pantas", "Perenggan contoh"],
+    assessment: ["Kuiz maksud", "Rubrik perenggan"],
+    aids: ["Kad peribahasa", "Gambar situasi", "Rubrik"]
+  },
+  {
+    standards: "Pemahaman grafik: jadual/infografik. Rumusan 4–5 ayat.",
+    objectives: "Murid menulis rumusan 4–5 ayat yang padat & kohesif.",
+    activities: ["Baca infografik", "Ekstrak isi penting", "Tulis rumusan"],
+    assessment: ["Semak kriteria rumusan", "Rakan sebaya 2 bintang 1 harapan"],
+    aids: ["Infografik cetak", "Jadual isi", "Senarai semak rumusan"]
+  },
+  {
+    standards: "Lisan: debat mini / forum kelas. Etika hujah, bukti, kesantunan.",
+    objectives: "Murid berhujah dengan 2 bukti dan menutup hujah secara sopan.",
+    activities: ["Debat 2 lawan 2", "Penilai rakan menggunakan rubrik", "Refleksi"],
+    assessment: ["Rubrik debat", "Catatan anekdot guru"],
+    aids: ["Kad peranan", "Jam masa", "Rubrik penilaian"]
+  },
+  {
+    standards: "Penulisan: e-mel tidak rasmi/ mesej. Format digital & netiket.",
+    objectives: "Murid menghasilkan e-mel 120–150 patah kata mengikut netiket.",
+    activities: ["Bedah e-mel contoh", "Senarai semak netiket", "Draf → semak → hantaran simulasi"],
+    assessment: ["Rubrik e-mel", "Semakan rakan"],
+    aids: ["Contoh e-mel", "Templat editor", "Senarai semak"]
+  }
+],
+
+  "TAHUN 6": [
+   {
+    standards: "Pemahaman: analisis & menilai; membandingkan idea; menyokong dengan bukti teks.",
+    objectives: "Murid menjawab 10 soalan (5 literal, 3 inferens, 2 menilai) dan menyatakan bukti.",
+    activities: ["Annotasi teks (kod warna)", "Diskusi Socratic", "Menulis jawapan berasaskan bukti"],
+    assessment: ["Lembaran Q&A 10 item", "Semakan bukti dikutip"],
+    aids: ["Teks panjang sederhana", "Highlighter", "Rubrik jawapan"]
+  },
+  {
+    standards: "Penulisan: karangan respons terbuka (200–250 patah kata). Koheren & kohesi.",
+    objectives: "Murid menulis karangan 3–4 perenggan dengan penanda wacana & kesimpulan bernilai.",
+    activities: ["Analisis model", "Rangka isi + bukti", "Draf–Semak–Edit (proses)"],
+    assessment: ["Rubrik 3 dimensi (isi, bahasa, organisasi)", "Maklum balas rakan"],
+    aids: ["Model karangan", "Templat rangka", "Senarai semak penanda wacana"]
+  },
+  {
+    standards: "Tatabahasa: ayat majmuk pancangan relatif, kata pemeri, kata penguat. Ejaan/tanda baca.",
+    objectives: "Murid membina 6 ayat kompleks gramatis & menyunting 1 perenggan.",
+    activities: ["Kad klausa relatif", "Latihan ubah suai ayat", "Sunting perenggan (peer edit)"],
+    assessment: ["Kuiz 6 ayat", "Markah suntingan"],
+    aids: ["Kad klausa", "Lembaran suntingan", "Papan putih"]
+  },
+  {
+    standards: "Imbuhan lanjut: memperhalus pilihan imbuhan; ragam kata. Pengayaan kosa kata.",
+    objectives: "Murid memilih imbuhan tepat untuk 12 kata dan guna 6 dalam karangan mini.",
+    activities: ["Stesen pilihan imbuhan", "Debat kecil pilihan kata", "Karangan mini 6 ayat"],
+    assessment: ["Skor stesen imbuhan", "Semak karangan mini"],
+    aids: ["Kad imbuhan lanjut", "Kamus mini", "Rubrik ringkas"]
+  },
+  {
+    standards: "Seni bahasa: peribahasa tingkat lanjut; gaya bahasa (metafora, hiperbola, anafora).",
+    objectives: "Murid memasukkan sekurang-kurangnya 2 gaya bahasa & 1 peribahasa tepat.",
+    activities: ["Bedah teks sastera", "Ubah suai ayat → bergaya", "Bengkel perenggan kesan gaya"],
+    assessment: ["Senarai semak gaya dipakai", "Rubrik perenggan"],
+    aids: ["Petikan sastera", "Senarai gaya", "Kertas A4"]
+  },
+  {
+    standards: "Pemahaman grafik/ data: jadual, carta pai/garis. Rumusan & implikasi.",
+    objectives: "Murid menulis rumusan 5–6 ayat dan menyatakan 1 implikasi.",
+    activities: ["Analisis data kelas", "Soal jawab terarah", "Rumusan bertulis"],
+    assessment: ["Lembaran tafsiran", "Semakan rakan"],
+    aids: ["Data/graf", "Jadual ringkas", "Pen penanda"]
+  },
+  {
+    standards: "Lisan: forum/ kolokium kelas; teknik moderasi & giliran. Etika wacana.",
+    objectives: "Murid menyumbang 2 hujah, 1 sanggahan, 1 rumusan ringkas.",
+    activities: ["Forum 5–6 orang", "Rubrik moderator", "Refleksi individu"],
+    assessment: ["Rubrik forum", "Catatan anekdot"],
+    aids: ["Kad peranan", "Loceng masa", "Rubrik moderator"]
+  },
+  {
+    standards: "Penulisan fungsional: surat rasmi/ permohonan ringkas. Format & laras bahasa.",
+    objectives: "Murid menulis surat rasmi 3 perenggan dengan format tepat.",
+    activities: ["Bedah contoh surat rasmi", "Senarai semak format", "Draf → semak → muktamad"],
+    assessment: ["Rubrik format & laras", "Semakan rakan"],
+    aids: ["Contoh surat rasmi", "Templat", "Senarai semak"]
+    }
+  ]
+};
+
+/* =======================
+   3) Takwim Sekolah 2025
+   ======================= */
+const TAKWIM = [
+  ["2025-02-17","2025-02-28"],
+  ["2025-03-01","2025-03-31"],
+  ["2025-04-01","2025-04-30"],
+  ["2025-05-01","2025-05-28"],
+  ["2025-06-10","2025-06-30"],
+  ["2025-07-01","2025-07-31"],
+  ["2025-08-01","2025-08-31"],
+  ["2025-09-01","2025-09-12"],
+  ["2025-09-22","2025-09-30"],
+  ["2025-10-01","2025-10-31"],
+  ["2025-11-01","2025-11-30"],
+  ["2025-12-01","2025-12-19"]
+];
+
+/* =======================
+   4) Util Tarikh & Minggu
+   ======================= */
+const HARI_MS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+const HARI_EN = { "Isnin":"MONDAY","Selasa":"TUESDAY","Rabu":"WEDNESDAY","Khamis":"THURSDAY","Jumaat":"FRIDAY" };
+
+function* workingDatesInCalendar(){
+  for(const [s,e] of TAKWIM){
+    let d = new Date(s), end = new Date(e);
+    while(d <= end){
+      const day = d.getDay(); // 0 Ahad .. 6 Sabtu
+      if(day !== 0 && day !== 6){ yield new Date(d); }
+      d.setDate(d.getDate()+1);
+    }
+  }
+}
+
+// kira nombor minggu bermula 17/2/2025; minggu bertambah setiap ISNIN baru
+function computeWeekNumbers(dates){
+  let week=1;
+  return dates.map((d,i)=>{
+    if(i!==0 && d.getDay()===1) week++; // setiap Isnin
+    return {date:d, week};
+  });
+}
+
+function fmtDateMS(date){
+  return date.toLocaleDateString("ms-MY", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+}
+
+
+/* =======================
+   6) Generate RPH
+   ======================= */
+const output = document.getElementById("output");
+const genBtn = document.getElementById("genBtn");
+const subjectSel = document.getElementById("subject");
+const yearSel = document.getElementById("year");
+const mingguSel = document.getElementById("mingguSelect");
+
+genBtn.addEventListener("click", generateRPH);
+
+document.getElementById("printWeekBtn").addEventListener("click", () => {
+  const w = parseInt(mingguSel.value || "0");
+  const nodes = [...document.querySelectorAll(`.rph[data-week='${w}']`)];
+  printNodes(nodes);
+});
+mingguSel.addEventListener("change", filterByWeek);
+
+function generateRPH(){
+  const subject = subjectSel.value;
+  const year = yearSel.value;
+  if(subject !== "BAHASA MELAYU"){
+    alert("Buat masa ini, kandungan terperinci hanya untuk BAHASA MELAYU.");
+    return;
+  }
+
+  output.innerHTML = "";
+// masa jadual
+const masaMap = {};
+document.querySelectorAll("input[data-hari]").forEach(inp => {
+  const val = (inp.value || "").trim();
+  if (val) {
+    masaMap[inp.dataset.hari] = val;
+  }
+  // kalau kosong → langsung tak dimasukkan
+});
+
+  // Kumpul tarikh bekerja + minggu
+  const dates = [...workingDatesInCalendar()];
+  const datedWeeks = computeWeekNumbers(dates);
+
+  // Isi dropdown minggu mengikut maksimum minggu sebenar
+  const maxWeek = datedWeeks.at(-1).week;
+  mingguSel.innerHTML = "";
+  for(let i=1;i<=maxWeek;i++){
+    const opt=document.createElement("option"); opt.value=i; opt.textContent="Minggu "+i;
+    mingguSel.appendChild(opt);
+  }
+
+  // Unit mingguan ikut Tahun (berpusing jika > bil unit)
+  const units = MY_UNITS[year];
+  const pool = POOLS_BM[year];
+
+  // Peta minggu → unit
+  const weekToUnit = {};
+  for(let w=1; w<=maxWeek; w++){
+    weekToUnit[w] = units[(w-1) % units.length];
+  }
+
+// Jana RPH untuk setiap tarikh bekerja
+datedWeeks.forEach(({date, week}) => {
+  const hari = HARI_MS[date.getDay()];
+  if (hari === "Ahad" || hari === "Sabtu") return;
+
+  // ambil masa ikut jadual, pastikan string sah
+const masa = masaMap[hari];
+if (!masa) return; // kalau undefined → skip
+
+  const weeklyTopic = weekToUnit[week];
+  const pool = POOLS_BM[year];
+  const variant = pool[(week + date.getDay()) % pool.length];
+
+  const node = renderRPH({
+    subject: "Bahasa Melayu",
+    yearNum: parseInt(year.replace(/\D/g, "")) || "",
+    dayEN: HARI_EN[hari],
+    time: masa.trim(),
+    week,
+    weeklyTopic,
+    dateStr: fmtDateMS(date),
+    ...variant
+  });
+
+  node.dataset.week = week;
+  output.appendChild(node);
+});
+
+
+
+  // Selepas jana, tapis ikut minggu = 1
+  mingguSel.value = "1";
+  filterByWeek();
+}
+
+/* =======================
+   7) Renderer RPH (DLP)
+   ======================= */
+function renderList(items){
+  return `<ul>${items.map(i=>`<li>${escapeHTML(i)}</li>`).join("")}</ul>`;
+}
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function renderRPH(data){
+  const wrap = document.createElement("div");
+  wrap.className = "rph";
+  wrap.innerHTML = `
+    <div class="rph-header">
+      <div class="rph-title">RANCANGAN PENGAJARAN HARIAN (DLP)</div>
+      <div style="text-align:right; font-weight:700; color:#1e293b">Week: ${data.week}</div>
+
+      <div class="kv">
+        <b>Matapelajaran:</b><div>${escapeHTML(data.subject)}</div>
+        <b>Tahun:</b><div>${escapeHTML(data.yearNum)}</div>
+        <b>Hari:</b><div>${escapeHTML(data.dayEN)}</div>
+        <b>Masa:</b><div>${escapeHTML(data.time)}</div>
+      </div>
+      <div class="kv">
+        <b>Tajuk:</b><div>${escapeHTML(data.weeklyTopic)}</div>
+        <b>Tarikh:</b><div>${escapeHTML(data.dateStr)}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h4>Standard Pembelajaran</h4>
+      <div class="muted">${escapeHTML(data.standards)}</div>
+    </div>
+
+    <div class="section">
+      <h4>Objektif Pembelajaran</h4>
+      <div>${escapeHTML(data.objectives)}</div>
+    </div>
+
+    <div class="section">
+      <h4>Aktiviti Pengajaran dan Pembelajaran</h4>
+      ${renderList(data.activities)}
+    </div>
+
+    <div class="section">
+      <h4>Penilaian</h4>
+      ${renderList(data.assessment)}
+    </div>
+
+    <div class="section">
+      <h4>Bahan Bantu</h4>
+      ${renderList(data.aids)}
+    </div>
+
+    <div class="section">
+      <h4>Refleksi</h4>
+      <div class="muted">………………………………………………………………………………………………………………………………………………………………</div>
+    </div>
+
+    <div class="footer-line hide-print">
+      <button class="btn ghost" onclick="printNodes([this.closest('.rph')])">Cetak RPH Ini</button>
+    </div>
+  `;
+  return wrap;
+}
+
+/* =======================
+   8) Cetak & Tapis
+   ======================= */
+function filterByWeek(){
+  const w = parseInt(mingguSel.value || "0");
+  document.querySelectorAll(".rph").forEach(node=>{
+    node.style.display = (parseInt(node.dataset.week)===w) ? "" : "none";
+  });
+}
+
+/** 
+ * Print sandbox tanpa duplikasi
+ * - hanya salinan dalam #printSandbox akan dicetak
+ * - semua UI lain disembunyikan dengan kelas body.printing
+ */
+function printNodes(nodes){
+  if(!nodes||nodes.length===0){alert("Tiada RPH untuk dicetak.");return;}
+
+  const sand = document.getElementById("printSandbox");
+  sand.innerHTML = ""; // bersihkan terlebih dahulu
+
+  // dedupe berdasarkan gabungan minggu + tarikh + hari + masa
+  const seen = new Set();
+  nodes.forEach(n=>{
+    const key = [
+      n.dataset.week,
+      n.querySelector(".kv b + div")?.textContent, // Subject
+      n.querySelector(".kv b + div + b + div")?.textContent, // Year
+      n.querySelectorAll(".kv b + div")[2]?.textContent, // Day
+      n.querySelectorAll(".kv b + div")[3]?.textContent, // Time
+      n.querySelectorAll(".kv b + div")[5]?.textContent  // Date
+    ].join("|");
+
+    if(!seen.has(key)){
+      const clone = n.cloneNode(true);
+      // buang butang cetak per-item
+      const btn = clone.querySelector(".footer-line");
+      if(btn) btn.remove();
+      clone.style.display = "";
+      sand.appendChild(clone);
+      seen.add(key);
+    }
+  });
+
+  // aktifkan mod printing
+  document.body.classList.add("printing");
+
+  const cleanup = () => {
+    document.body.classList.remove("printing");
+    sand.innerHTML = "";
+  };
+
+  // cuba gunakan afterprint, dengan fallback timeout
+  const onAfter = () => { cleanup(); window.removeEventListener("afterprint", onAfter); };
+  window.addEventListener("afterprint", onAfter, { once:true });
+
+  // cetak
+  window.print();
+
+  // Fallback (sekiranya afterprint tidak terpicu)
+  setTimeout(()=>{
+    if(document.body.classList.contains("printing")) cleanup();
+  }, 1500);
+}
+
+// Butang HANTAR → buka pautan Google Apps Script
+document.getElementById("sendBtn").addEventListener("click", () => {
+  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec", "_blank");
+});
+
+/* Auto isi dropdown minggu kosong pada mula (default 42) */
+(function initWeekDropdown(){
+  mingguSel.innerHTML = "";
+  for(let i=1;i<=42;i++){
+    const o=document.createElement("option"); o.value=i; o.textContent="Minggu "+i;
+    mingguSel.appendChild(o);
+  }
+})();
+</script>
+</body>
+</html>
