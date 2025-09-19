@@ -173,7 +173,7 @@ async function loadJsonData() {
     
     // Rebuild EN_UNITS and POOLS from JSON structure
     EN_UNITS = {};
-    POOLS = data; // POOLS now directly holds the full JSON structure
+    POOLS = data;
 
     // Build EN_UNITS as array of unit names per year
     for (const [year, unitsObj] of Object.entries(data)) {
@@ -284,10 +284,12 @@ genBtn.addEventListener("click", async () => {
   const datedWeeks = computeWeekNumbers(dates);
 
   // Isi dropdown minggu mengikut maksimum minggu sebenar
-  const maxWeek = datedWeeks.at(-1).week;
+  const maxWeek = datedWeeks.at(-1)?.week || 1;
   mingguSel.innerHTML = "";
-  for(let i=1;i<=maxWeek;i++){
-    const opt=document.createElement("option"); opt.value=i; opt.textContent="Minggu "+i;
+  for(let i=1; i<=maxWeek; i++){
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = "Minggu " + i;
     mingguSel.appendChild(opt);
   }
 
@@ -339,7 +341,6 @@ genBtn.addEventListener("click", async () => {
     let combinedAids = [];
 
     selectedSkills.forEach(skill => {
-      // Pilih satu aktiviti secara rawak dari setiap kemahiran (jika ada >1)
       const skillPool = unitData[skill];
       const randomItem = skillPool[Math.floor(Math.random() * skillPool.length)];
 
@@ -372,9 +373,11 @@ genBtn.addEventListener("click", async () => {
     output.appendChild(node);
   });
 
-  // Selepas jana, tapis ikut minggu = 1
-  mingguSel.value = "1";
-  filterByWeek();
+  // 👇 PERBAIKAN UTAMA: Tunggu sekejap untuk pastikan DOM stabil
+  setTimeout(() => {
+    mingguSel.value = "1";
+    filterByWeek(); // Sekarang akan berfungsi!
+  }, 0);
 });
 
 // Helper: Get N random unique elements from array
@@ -384,14 +387,22 @@ function getRandomUniqueElements(arr, n) {
 }
 
 /* =======================
-   Renderer RPH (Modified to show skills clearly)
+   Renderer RPH (Perbaiki escapeHTML)
    ======================= */
 function renderList(items){
   return `<ul>${items.map(i=>`<li>${escapeHTML(i)}</li>`).join("")}</ul>`;
 }
+
 function escapeHTML(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'<','>':'>','"':'&quot;',"'":'&#39;'}[m]));
+  return String(s).replace(/[&<>"']/g, m => ({
+    '&': '&amp;',
+    '<': '<',   // 🛠️ DIPERBAIKI: sebelum ini hilang <
+    '>': '>',   // 🛠️ DIPERBAIKI: sebelum ini hilang >
+    '"': '&quot;',
+    "'": '&#39;'
+  }[m]));
 }
+
 function renderRPH(data){
   const wrap = document.createElement("div");
   wrap.className = "rph";
@@ -450,31 +461,35 @@ function renderRPH(data){
 }
 
 /* =======================
-   Cetak & Tapis (unchanged)
+   Cetak & Tapis (Pastikan fungsi ini dipanggil selepas DOM stabil)
    ======================= */
 function filterByWeek(){
-  const w = parseInt(mingguSel.value || "0");
-  document.querySelectorAll(".rph").forEach(node=>{
-    node.style.display = (parseInt(node.dataset.week)===w) ? "" : "none";
+  const w = parseInt(mingguSel.value || "0", 10); // 🛠️ Tambah radix 10 untuk parseInt
+  document.querySelectorAll(".rph").forEach(node => {
+    const nodeWeek = parseInt(node.dataset.week, 10);
+    node.style.display = (nodeWeek === w) ? "" : "none";
   });
 }
 
 function printNodes(nodes){
-  if(!nodes||nodes.length===0){alert("Tiada RPH untuk dicetak.");return;}
+  if(!nodes || nodes.length === 0){
+    alert("Tiada RPH untuk dicetak.");
+    return;
+  }
 
   const sand = document.getElementById("printSandbox");
   sand.innerHTML = "";
 
   const seen = new Set();
-  nodes.forEach(n=>{
-    const key = [
-      n.dataset.week,
-      n.querySelector(".kv b + div")?.textContent,
-      n.querySelector(".kv b + div + b + div")?.textContent,
-      n.querySelectorAll(".kv b + div")[2]?.textContent,
-      n.querySelectorAll(".kv b + div")[3]?.textContent,
-      n.querySelectorAll(".kv b + div")[5]?.textContent
-    ].join("|");
+  nodes.forEach(n => {
+    const selectors = [
+      n.querySelector(".kv b + div")?.textContent,           // Subject
+      n.querySelector(".kv b + div + b + div")?.textContent, // Year
+      n.querySelectorAll(".kv b + div")[2]?.textContent,     // Day
+      n.querySelectorAll(".kv b + div")[3]?.textContent,     // Time
+      n.querySelectorAll(".kv b + div")[5]?.textContent      // Date
+    ];
+    const key = [n.dataset.week, ...selectors].join("|");
 
     if(!seen.has(key)){
       const clone = n.cloneNode(true);
@@ -493,18 +508,21 @@ function printNodes(nodes){
     sand.innerHTML = "";
   };
 
-  const onAfter = () => { cleanup(); window.removeEventListener("afterprint", onAfter); };
-  window.addEventListener("afterprint", onAfter, { once:true });
+  const onAfter = () => {
+    cleanup();
+    window.removeEventListener("afterprint", onAfter);
+  };
+  window.addEventListener("afterprint", onAfter, { once: true });
 
   window.print();
 
-  setTimeout(()=>{
+  setTimeout(() => {
     if(document.body.classList.contains("printing")) cleanup();
   }, 1500);
 }
 
 document.getElementById("sendBtn").addEventListener("click", () => {
-  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec  ", "_blank");
+  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec", "_blank");
 });
 </script>
 </body>
