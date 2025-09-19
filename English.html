@@ -160,380 +160,47 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-/* =======================
-   1) Data: Unit Mingguan
-   ======================= */
-const EN_UNITS = {
-  "TAHUN 1": [
-    "Unit 1: My Classroom","Unit 2: My Family","Unit 3: My Body","Unit 4: My House",
-    "Unit 5: Food","Unit 6: My Clothes","Unit 7: Animals","Unit 8: Playtime","Unit 9: The Farm"
-  ],
-  "TAHUN 2": [
-    "Unit 1: My Family","Unit 2: My Classroom","Unit 3: My Body","Unit 4: My House",
-    "Unit 5: Food and Drink","Unit 6: My Clothes","Unit 7: Animals","Unit 8: At the Playground",
-    "Unit 9: At the Zoo","Unit 10: Stories"
-  ],
-  "TAHUN 3": [
-    "Unit 1: My Classroom","Unit 2: My World","Unit 3: At Home","Unit 4: Food",
-    "Unit 5: Animals","Unit 6: In Town","Unit 7: Things We Do","Unit 8: Having Fun!",
-    "Unit 9: Holidays","Unit 10: Stories"
-  ],
-  "TAHUN 4": [
-    "Unit 1: Family and Friends","Unit 2: Fun at School","Unit 3: Food, Please!","Unit 4: My Favourite Place",
-    "Unit 5: Helping at Home","Unit 6: Sports and Games","Unit 7: In the Countryside",
-    "Unit 8: In the City","Unit 9: Animals","Unit 10: Stories"
-  ],
-  "TAHUN 5": [
-    "Unit 1: School Life","Unit 2: Amazing Animals","Unit 3: Let’s Celebrate!","Unit 4: On Holiday",
-    "Unit 5: Healthy Living","Unit 6: Around the Town","Unit 7: Technology Time","Unit 8: Great People",
-    "Unit 9: The Natural World","Unit 10: Enjoy Your Meal!"
-  ],
-  "TAHUN 6": [
-    "Unit 1: It’s an Emergency!","Unit 2: Life in the Past","Unit 3: Adventure Time","Unit 4: Cool Jobs",
-    "Unit 5: Getting Around","Unit 6: How Is It Made?","Unit 7: Music and Song","Unit 8: Tell Me a Story",
-    "Unit 9: What’s Your Opinion?","Unit 10: It’s a Mystery"
-  ]
-};
+// Global variable to hold fetched data
+let EN_UNITS = {};
+let POOLS = {};
+
+// Fetch data from sp-bi.json
+async function loadJsonData() {
+  try {
+    const response = await fetch('sp-bi.json');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    
+    // Rebuild EN_UNITS and POOLS from JSON structure
+    EN_UNITS = {};
+    POOLS = data; // POOLS now directly holds the full JSON structure
+
+    // Build EN_UNITS as array of unit names per year
+    for (const [year, unitsObj] of Object.entries(data)) {
+      EN_UNITS[year] = Object.keys(unitsObj);
+    }
+  } catch (error) {
+    console.error("Failed to load sp-bi.json:", error);
+    alert("Ralat: Tidak dapat memuatkan data RPH dari sp-bi.json. Sila pastikan fail wujud.");
+  }
+}
+
+// Initialize dropdown with placeholder until data loads
+(function initWeekDropdown(){
+  const mingguSel = document.getElementById("mingguSelect");
+  mingguSel.innerHTML = "";
+  for(let i=1;i<=42;i++){
+    const o=document.createElement("option"); o.value=i; o.textContent="Minggu "+i;
+    mingguSel.appendChild(o);
+  }
+})();
+
+// Load data on startup
+loadJsonData();
 
 /* ==============================================================
-   2) Pools kandungan berbeza bagi setiap Tahun (variasi dijamin)
+   Takwim Sekolah 2025 (unchanged)
    ============================================================== */
-const POOLS = {
-  "TAHUN 1": [
-    {
-      standards:"1.1 follow classroom instructions; 1.2 identify classroom objects; 2.1 say simple sentences.",
-      objectives:"Pupils can follow simple English instructions and name familiar classroom items.",
-      activities:["Simon Says with actions","Label-the-classroom game","Pair drill: This is a …"],
-      assessment:["Observation checklist (T/P)","Exit ticket: name 3 items"],
-      aids:["Real classroom objects","Picture cards","Word wall"]
-    },
-    {
-      standards:"1.3 listen and respond; 2.2 use pronouns (my/your); 3.1 copy simple words.",
-      objectives:"Pupils can introduce family members using my/your correctly.",
-      activities:["TPR family tree on board","Flashcard mingle: 'This is my …'","Mini book: My Family"],
-      assessment:["Oral check in pairs","Mini book submission"],
-      aids:["Family flashcards","Mini book template","Glue & crayons"]
-    }
-  ],
-  "TAHUN 2": [
-    {
-      standards:"1.1 understand short texts; 2.1 present simple (daily routines); 3.1 write simple sentences.",
-      objectives:"Pupils can talk about routines and write 3 sentences about their day.",
-      activities:["Class survey then bar chart talk","Sentence race with routine cards","Write: My Morning"],
-      assessment:["Peer check using rubric","Teacher anecdotal notes"],
-      aids:["Routine cards","Chart paper","Timers"]
-    },
-    {
-      standards:"1.2 follow instructions with sequence; 2.2 use imperatives; 4.1 read captions.",
-      objectives:"Pupils can give and follow classroom instructions in order.",
-      activities:["Make-and-do: origami with steps","Give directions in pairs","Gallery walk & reflect"],
-      assessment:["Checklist during task","Exit slip: write 2 steps"],
-      aids:["Origami paper","Step posters","Projector"]
-    },
-    {
-      standards:"1.3 understand questions (who/what/where); 2.3 use there is/are; 3.2 punctuation (. ?).",
-      objectives:"Pupils can describe their classroom using there is/are.",
-      activities:["Picture dictation","Find & count objects","Write 4 sentences about class"],
-      assessment:["Mini presentation","Notebook check"],
-      aids:["Picture packs","Counters","Worksheets"]
-    }
-  ],
-  "TAHUN 3": [
-    {
-      standards:"1.1 skim & scan for words; 2.1 present simple vs present continuous; 3.1 write simple paragraph.",
-      objectives:"Pupils can describe what people are doing now.",
-      activities:["Charades: present continuous","Info-gap pictures","Write: At the park (5 lines)"],
-      assessment:["Oral accuracy ticks","Paragraph rubric"],
-      aids:["Picture sets","Cue cards","Dictionary wall"]
-    },
-    {
-      standards:"1.2 infer meaning from visuals; 2.2 adverbs of frequency; 4.1 read short text with questions.",
-      objectives:"Pupils can talk about how often they do activities.",
-      activities:["Class frequency survey","Thermometer line game","Write 5 'I often…' lines"],
-      assessment:["Peer questioning","Short quiz"],
-      aids:["Survey sheet","Frequency ladder","Projector"]
-    },
-    {
-      standards:"1.3 understand instructions; 2.3 prepositions of place; 3.2 write captions & labels.",
-      objectives:"Pupils can give directions in town using prepositions.",
-      activities:["Map treasure hunt","Role play: asking directions","Draw map & label"],
-      assessment:["Role-play rubric","Map check"],
-      aids:["School map","Role cards","Markers"]
-    }
-  ],
-  "TAHUN 4": [
-    {
-      standards:"1.1 identify main ideas; 2.1 use comparatives & superlatives; 3.1 write descriptive paragraph.",
-      objectives:"Pupils can compare places and write a paragraph.",
-      activities:["Compare photos gallery","Superlative quiz show","Write: My favourite place"],
-      assessment:["Two stars & a wish","Teacher rubric"],
-      aids:["Photo cards","Quiz slides","Word banks"]
-    },
-    {
-      standards:"1.2 locate details in text; 2.2 past simple regular verbs; 3.2 write recount.",
-      objectives:"Pupils can recount a fun school event using past tense.",
-      activities:["Timeline of events","Sentence unscramble race","Write: My fun day (6–8 lines)"],
-      assessment:["Recount checklist","Pair feedback"],
-      aids:["Timeline strips","Cut-up sentences","Model text"]
-    },
-    {
-      standards:"1.3 understand non-fiction features; 2.3 modal can/can’t; 4.1 read leaflet.",
-      objectives:"Pupils can explain what animals can/can’t do using leaflet info.",
-      activities:["Leaflet jigsaw","Can/Can’t interview","Create mini leaflet"],
-      assessment:["Interview observation","Leaflet product"],
-      aids:["Animal leaflets","Interview sheet","A4 template"]
-    }
-  ],
-  "TAHUN 5": [
-    {
-      standards:"1.1 infer meaning; 2.1 future with will; 3.1 write opinion with reasons.",
-      objectives:"Pupils can state opinions about technology with reasons.",
-      activities:["Four corners opinion","Debate carousel","Write: My view on tech"],
-      assessment:["Opinion rubric","Self-reflection slip"],
-      aids:["Prompt cards","Debate timer","Sentence frames"]
-    },
-    {
-      standards:"1.2 note-taking from short talk; 2.2 present perfect for experiences; 3.2 write postcard/email.",
-      objectives:"Pupils can talk and write about holiday experiences.",
-      activities:["Have you ever… mingle","Caption story from photos","Write a postcard"],
-      assessment:["Speaking ticks","Postcard marking"],
-      aids:["Photo sets","Mingle grid","Postcard template"]
-    },
-    {
-      standards:"1.3 read to locate evidence; 2.3 using should/shouldn’t; 3.3 write health tips list.",
-      objectives:"Pupils can propose health tips using should/shouldn’t.",
-      activities:["Health station tasks","Poster creation in groups","Gallery walk vote"],
-      assessment:["Poster rubric","Exit ticket"],
-      aids:["Station cards","Poster A3","Stickers"]
-    }
-  ],
-"TAHUN 6": [
-  // LISTENING
-  {
-    standards: "1.1.1 Recognise and reproduce independently a wide range of target language phonemes",
-    objectives: "Pupils can recognise and pronounce English sounds accurately.",
-    activities: ["Phonics drill", "Sound discrimination games", "Choral reading"],
-    assessment: ["Teacher observation", "Pronunciation checklist"],
-    aids: ["Audio recordings", "Phonics charts"]
-  },
-  {
-    standards: "1.2.1 Understand with little or no support the main idea of longer simple texts on a range of familiar topics",
-    objectives: "Pupils can identify the main idea in longer simple spoken texts.",
-    activities: ["Listening for gist", "Summarising main idea", "Matching activities"],
-    assessment: ["Listening task", "Oral Q&A"],
-    aids: ["Audio clips", "Short talks"]
-  },
-  {
-    standards: "1.2.2 Understand with little or no support specific information and details of longer simple texts on a range of familiar topics",
-    objectives: "Pupils can listen for details in spoken texts.",
-    activities: ["True/False statements", "Fill in details", "Information gap tasks"],
-    assessment: ["Comprehension quiz", "Worksheet"],
-    aids: ["Audio recordings", "Worksheets"]
-  },
-  {
-    standards: "1.2.3 Understand with little or no support longer simple narratives on a range of familiar topics",
-    objectives: "Pupils can understand simple stories when listened to.",
-    activities: ["Story listening", "Sequencing story strips", "Story retelling"],
-    assessment: ["Story retelling", "Oral questions"],
-    aids: ["Story audio", "Flashcards"]
-  },
-  {
-    standards: "1.2.4 Understand longer sequences of supported classroom instructions",
-    objectives: "Pupils can follow longer classroom instructions.",
-    activities: ["Listen & do", "Following multi-step tasks", "Classroom commands"],
-    assessment: ["Performance task", "Teacher observation"],
-    aids: ["Classroom props", "Instruction cards"]
-  },
-  {
-    standards: "1.2.5 Understand more complex supported questions",
-    objectives: "Pupils can respond to more complex questions.",
-    activities: ["Q&A sessions", "Pair interview", "Quiz games"],
-    assessment: ["Oral response", "Checklist"],
-    aids: ["Question cards", "Dialogue prompts"]
-  },
-  {
-    standards: "1.3.1 Guess the meaning of unfamiliar words from clues provided by other known words and by context on familiar topics",
-    objectives: "Pupils can infer meaning of unfamiliar words from context.",
-    activities: ["Context clues guessing", "Word meaning games", "Group discussion"],
-    assessment: ["Vocabulary quiz", "Teacher observation"],
-    aids: ["Texts with highlighted words", "Worksheets"]
-  },
-
-  // SPEAKING
-  {
-    standards: "2.1.1 Give detailed information about themselves and others",
-    objectives: "Pupils can provide detailed personal information.",
-    activities: ["Self introduction", "Pair interviews", "Class survey"],
-    assessment: ["Oral presentation", "Interview task"],
-    aids: ["Profile cards", "Pictures"]
-  },
-  {
-    standards: "2.1.2 Ask about and express rules and obligations",
-    objectives: "Pupils can ask and explain rules/obligations clearly.",
-    activities: ["Role play", "Rules discussion", "Poster presentation"],
-    assessment: ["Role-play rubric", "Poster check"],
-    aids: ["Scenario cards", "Chart paper"]
-  },
-  {
-    standards: "2.1.3 Explain and give reasons for simple advice",
-    objectives: "Pupils can give advice and reasons using simple language.",
-    activities: ["Advice cards", "Pair work", "Class advice wall"],
-    assessment: ["Oral explanation", "Peer feedback"],
-    aids: ["Advice prompts", "Flashcards"]
-  },
-  {
-    standards: "2.1.4 Ask about and describe future plans or events",
-    objectives: "Pupils can ask and describe future events using correct tenses.",
-    activities: ["Future diary", "Pair interviews", "Event poster"],
-    assessment: ["Speaking task", "Presentation"],
-    aids: ["Calendar", "Prompt cards"]
-  },
-  {
-    standards: "2.1.5 Ask about and describe personality",
-    objectives: "Pupils can describe personality traits of people.",
-    activities: ["Describe a friend", "Guess who game", "Character cards"],
-    assessment: ["Oral description", "Game performance"],
-    aids: ["Character flashcards", "Worksheets"]
-  },
-  {
-    standards: "2.2.1 Keep interaction going in short exchanges by checking understanding of what a speaker is saying",
-    objectives: "Pupils can maintain short exchanges during conversation.",
-    activities: ["Dialogue role-play", "Pair interviews", "Conversation circle"],
-    assessment: ["Speaking checklist", "Dialogue performance"],
-    aids: ["Dialogue prompts", "Cue cards"]
-  },
-  {
-    standards: "2.2.2 Agree a set of basic steps needed to complete extended classroom tasks",
-    objectives: "Pupils can collaborate and agree on steps in tasks.",
-    activities: ["Group planning", "Task sequencing", "Project planning"],
-    assessment: ["Group work rubric", "Checklist"],
-    aids: ["Task cards", "Flow charts"]
-  },
-  {
-    standards: "2.3.1 Narrate short basic stories, events and experiences",
-    objectives: "Pupils can narrate simple events and experiences.",
-    activities: ["Storytelling", "Show and tell", "Picture sequence narration"],
-    assessment: ["Narration rubric", "Peer evaluation"],
-    aids: ["Picture cards", "Story prompts"]
-  },
-
-  // READING
-  {
-    standards: "3.2.1 Understand the main idea of simple longer texts",
-    objectives: "Pupils can identify the main idea in texts.",
-    activities: ["Skimming tasks", "Summarising", "Main idea matching"],
-    assessment: ["Comprehension worksheet", "Q&A"],
-    aids: ["Texts", "Highlighting tools"]
-  },
-  {
-    standards: "3.2.2 Understand specific information and details of simple longer texts",
-    objectives: "Pupils can read and extract details from texts.",
-    activities: ["Scanning tasks", "Fill in details", "Information search"],
-    assessment: ["Reading comprehension", "Worksheet"],
-    aids: ["Texts", "Graphic organisers"]
-  },
-  {
-    standards: "3.2.3 Guess the meaning of unfamiliar words from clues provided by other known words and by context",
-    objectives: "Pupils can infer meanings using context clues.",
-    activities: ["Vocabulary guessing", "Contextual reading", "Synonym hunt"],
-    assessment: ["Vocabulary quiz", "Worksheet"],
-    aids: ["Texts with new words", "Dictionary"]
-  },
-  {
-    standards: "3.2.4 Use with some support familiar print and digital resources to check meaning",
-    objectives: "Pupils can use dictionaries/resources to find meanings.",
-    activities: ["Dictionary search", "Online word hunt", "Pair resource task"],
-    assessment: ["Dictionary use task", "Quiz"],
-    aids: ["Dictionaries", "Tablets/computers"]
-  },
-  {
-    standards: "3.3.1 Read and enjoy A2 fiction/non-fiction print and digital texts of interest",
-    objectives: "Pupils can read and enjoy texts for pleasure.",
-    activities: ["Silent reading", "Book review", "Reading journal"],
-    assessment: ["Book review", "Oral sharing"],
-    aids: ["Storybooks", "Digital texts"]
-  },
-
-  // WRITING
-  {
-    standards: "4.2.1 Give detailed information about themselves and others",
-    objectives: "Pupils can write about themselves and others clearly.",
-    activities: ["Profile writing", "Pen pal letter", "Short essay"],
-    assessment: ["Written task", "Peer marking"],
-    aids: ["Writing frames", "Model texts"]
-  },
-  {
-    standards: "4.2.2 Describe future plans or events",
-    objectives: "Pupils can write about future events/plans.",
-    activities: ["Future diary", "Event plan", "Creative writing"],
-    assessment: ["Written task", "Checklist"],
-    aids: ["Writing prompts", "Calendar"]
-  },
-  {
-    standards: "4.2.3 Narrate factual and imagined events and experiences",
-    objectives: "Pupils can narrate simple stories or events in writing.",
-    activities: ["Story writing", "News report", "Personal recount"],
-    assessment: ["Writing rubric", "Peer review"],
-    aids: ["Story frames", "Pictures"]
-  },
-  {
-    standards: "4.2.4 Describe personality",
-    objectives: "Pupils can describe personalities in writing.",
-    activities: ["Character description", "Classmate profile", "Story character"],
-    assessment: ["Written task", "Peer feedback"],
-    aids: ["Word banks", "Adjective list"]
-  },
-  {
-    standards: "4.2.5 Connect sentences into two coherent paragraphs or more using basic coordinating conjunctions and reference pronouns",
-    objectives: "Pupils can connect sentences into paragraphs coherently.",
-    activities: ["Paragraph building", "Sentence joining", "Writing tasks"],
-    assessment: ["Paragraph rubric", "Written test"],
-    aids: ["Conjunction cards", "Sentence strips"]
-  },
-  {
-    standards: "4.3.1 Use capital letters, full stops, commas in lists, question marks and speech marks appropriately at discourse level",
-    objectives: "Pupils can punctuate texts correctly.",
-    activities: ["Punctuation exercises", "Peer editing", "Dictation"],
-    assessment: ["Editing task", "Written test"],
-    aids: ["Punctuation charts", "Worksheets"]
-  },
-  {
-    standards: "4.3.2 Spell most high frequency words accurately in independent writing",
-    objectives: "Pupils can spell common words correctly.",
-    activities: ["Spelling games", "Dictation", "Word wall"],
-    assessment: ["Spelling test", "Dictation"],
-    aids: ["Word lists", "Flashcards"]
-  },
-  {
-    standards: "4.3.3 Produce a plan or draft of two paragraphs or more for a familiar topic and modify this appropriately in response to feedback",
-    objectives: "Pupils can plan, draft and edit their writing.",
-    activities: ["Draft writing", "Peer review", "Editing task"],
-    assessment: ["Writing portfolio", "Teacher feedback"],
-    aids: ["Draft templates", "Editing checklist"]
-  },
-
-  // LANGUAGE ARTS
-  {
-    standards: "5.2.1 Describe in simple language a character’s actions or feelings and explain the reasons for them",
-    objectives: "Pupils can describe characters and explain reasons.",
-    activities: ["Character analysis", "Drama role-play", "Class discussion"],
-    assessment: ["Oral sharing", "Worksheet"],
-    aids: ["Storybooks", "Character cards"]
-  },
-  {
-    standards: "5.3.1 Respond imaginatively and intelligibly through creating simple stories and simple poems",
-    objectives: "Pupils can create imaginative texts like poems/stories.",
-    activities: ["Poem writing", "Story creation", "Creative project"],
-    assessment: ["Creative writing rubric", "Performance"],
-    aids: ["Story prompts", "Poetry frames"]
-  }
-]
-
-};
-
-/* =======================
-   3) Takwim Sekolah 2025
-   ======================= */
 const TAKWIM = [
   ["2025-02-17","2025-02-28"],
   ["2025-03-01","2025-03-31"],
@@ -550,7 +217,7 @@ const TAKWIM = [
 ];
 
 /* =======================
-   4) Util Tarikh & Minggu
+   Util Tarikh & Minggu
    ======================= */
 const HARI_MS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
 const HARI_EN = { "Isnin":"MONDAY","Selasa":"TUESDAY","Rabu":"WEDNESDAY","Khamis":"THURSDAY","Jumaat":"FRIDAY" };
@@ -559,18 +226,17 @@ function* workingDatesInCalendar(){
   for(const [s,e] of TAKWIM){
     let d = new Date(s), end = new Date(e);
     while(d <= end){
-      const day = d.getDay(); // 0 Ahad .. 6 Sabtu
+      const day = d.getDay();
       if(day !== 0 && day !== 6){ yield new Date(d); }
       d.setDate(d.getDate()+1);
     }
   }
 }
 
-// kira nombor minggu bermula 17/2/2025; minggu bertambah setiap ISNIN baru
 function computeWeekNumbers(dates){
   let week=1;
   return dates.map((d,i)=>{
-    if(i!==0 && d.getDay()===1) week++; // setiap Isnin
+    if(i!==0 && d.getDay()===1) week++;
     return {date:d, week};
   });
 }
@@ -579,9 +245,8 @@ function fmtDateMS(date){
   return date.toLocaleDateString("ms-MY", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 }
 
-
 /* =======================
-   6) Generate RPH
+   Generate RPH (Modified)
    ======================= */
 const output = document.getElementById("output");
 const genBtn = document.getElementById("genBtn");
@@ -589,16 +254,13 @@ const subjectSel = document.getElementById("subject");
 const yearSel = document.getElementById("year");
 const mingguSel = document.getElementById("mingguSelect");
 
-genBtn.addEventListener("click", generateRPH);
+genBtn.addEventListener("click", async () => {
+  // Ensure data is loaded
+  if (Object.keys(POOLS).length === 0) {
+    alert("Data RPH masih dimuatkan. Sila cuba sebentar lagi.");
+    return;
+  }
 
-document.getElementById("printWeekBtn").addEventListener("click", () => {
-  const w = parseInt(mingguSel.value || "0");
-  const nodes = [...document.querySelectorAll(`.rph[data-week='${w}']`)];
-  printNodes(nodes);
-});
-mingguSel.addEventListener("change", filterByWeek);
-
-function generateRPH(){
   const subject = subjectSel.value;
   const year = yearSel.value;
   if(subject !== "BAHASA INGGERIS"){
@@ -607,15 +269,15 @@ function generateRPH(){
   }
 
   output.innerHTML = "";
-// masa jadual
-const masaMap = {};
-document.querySelectorAll("input[data-hari]").forEach(inp => {
-  const val = (inp.value || "").trim();
-  if (val) {
-    masaMap[inp.dataset.hari] = val;
-  }
-  // kalau kosong → langsung tak dimasukkan
-});
+
+  // masa jadual
+  const masaMap = {};
+  document.querySelectorAll("input[data-hari]").forEach(inp => {
+    const val = (inp.value || "").trim();
+    if (val) {
+      masaMap[inp.dataset.hari] = val;
+    }
+  });
 
   // Kumpul tarikh bekerja + minggu
   const dates = [...workingDatesInCalendar()];
@@ -631,7 +293,10 @@ document.querySelectorAll("input[data-hari]").forEach(inp => {
 
   // Unit mingguan ikut Tahun (berpusing jika > bil unit)
   const units = EN_UNITS[year];
-  const pool = POOLS[year];
+  if (!units || units.length === 0) {
+    alert(`Tiada unit tersedia untuk ${year}.`);
+    return;
+  }
 
   // Peta minggu → unit
   const weekToUnit = {};
@@ -639,49 +304,93 @@ document.querySelectorAll("input[data-hari]").forEach(inp => {
     weekToUnit[w] = units[(w-1) % units.length];
   }
 
-// Jana RPH untuk setiap tarikh bekerja
-datedWeeks.forEach(({date, week}) => {
-  const hari = HARI_MS[date.getDay()];
-  if (hari === "Ahad" || hari === "Sabtu") return;
+  // Jana RPH untuk setiap tarikh bekerja
+  datedWeeks.forEach(({date, week}) => {
+    const hari = HARI_MS[date.getDay()];
+    if (hari === "Ahad" || hari === "Sabtu") return;
 
-  // ambil masa ikut jadual, pastikan string sah
-const masa = masaMap[hari];
-if (!masa) return; // kalau undefined → skip
+    const masa = masaMap[hari];
+    if (!masa) return;
 
-  const weeklyTopic = weekToUnit[week];
-  const pool = POOLS[year];
-  const variant = pool[(week + date.getDay()) % pool.length];
+    const weeklyTopic = weekToUnit[week];
 
-  const node = renderRPH({
-    subject: "English",
-    yearNum: parseInt(year.replace(/\D/g, "")) || "",
-    dayEN: HARI_EN[hari],
-    time: masa.trim(),
-    week,
-    weeklyTopic,
-    dateStr: fmtDateMS(date),
-    ...variant
+    // Dapatkan objek unit dari POOLS
+    const unitData = POOLS[year]?.[weeklyTopic];
+    if (!unitData) {
+      console.warn(`Tiada data untuk unit: ${weeklyTopic} dalam ${year}`);
+      return;
+    }
+
+    // Dapatkan senarai kemahiran dalam unit ini
+    const skillNames = Object.keys(unitData);
+    if (skillNames.length < 3) {
+      console.warn(`Unit ${weeklyTopic} hanya mempunyai ${skillNames.length} kemahiran. Memerlukan 3.`);
+      return;
+    }
+
+    // Pilih 3 kemahiran unik secara rawak
+    const selectedSkills = getRandomUniqueElements(skillNames, 3);
+
+    // Gabungkan kandungan dari 3 kemahiran
+    let combinedStandards = [];
+    let combinedObjectives = [];
+    let combinedActivities = [];
+    let combinedAssessment = [];
+    let combinedAids = [];
+
+    selectedSkills.forEach(skill => {
+      // Pilih satu aktiviti secara rawak dari setiap kemahiran (jika ada >1)
+      const skillPool = unitData[skill];
+      const randomItem = skillPool[Math.floor(Math.random() * skillPool.length)];
+
+      combinedStandards.push(`${skill}: ${randomItem.standards}`);
+      combinedObjectives.push(`${skill}: ${randomItem.objectives}`);
+      combinedActivities.push(...randomItem.activities.map(a => `${skill}: ${a}`));
+      combinedAssessment.push(...randomItem.assessment.map(a => `${skill}: ${a}`));
+      combinedAids.push(...randomItem.aids);
+    });
+
+    // Buang duplikat aids
+    combinedAids = [...new Set(combinedAids)];
+
+    const node = renderRPH({
+      subject: "English",
+      yearNum: parseInt(year.replace(/\D/g, "")) || "",
+      dayEN: HARI_EN[hari],
+      time: masa.trim(),
+      week,
+      weeklyTopic,
+      dateStr: fmtDateMS(date),
+      standards: combinedStandards.join("; "),
+      objectives: combinedObjectives.join("; "),
+      activities: combinedActivities,
+      assessment: combinedAssessment,
+      aids: combinedAids
+    });
+
+    node.dataset.week = week;
+    output.appendChild(node);
   });
-
-  node.dataset.week = week;
-  output.appendChild(node);
-});
-
-
 
   // Selepas jana, tapis ikut minggu = 1
   mingguSel.value = "1";
   filterByWeek();
+});
+
+// Helper: Get N random unique elements from array
+function getRandomUniqueElements(arr, n) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, n);
 }
 
 /* =======================
-   7) Renderer RPH (DLP)
+   Renderer RPH (Modified to show skills clearly)
    ======================= */
 function renderList(items){
   return `<ul>${items.map(i=>`<li>${escapeHTML(i)}</li>`).join("")}</ul>`;
 }
 function escapeHTML(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'<','>':'>','"':'&quot;',"'":'&#39;'}[m]));
 }
 function renderRPH(data){
   const wrap = document.createElement("div");
@@ -741,7 +450,7 @@ function renderRPH(data){
 }
 
 /* =======================
-   8) Cetak & Tapis
+   Cetak & Tapis (unchanged)
    ======================= */
 function filterByWeek(){
   const w = parseInt(mingguSel.value || "0");
@@ -750,32 +459,25 @@ function filterByWeek(){
   });
 }
 
-/** 
- * Print sandbox tanpa duplikasi
- * - hanya salinan dalam #printSandbox akan dicetak
- * - semua UI lain disembunyikan dengan kelas body.printing
- */
 function printNodes(nodes){
   if(!nodes||nodes.length===0){alert("Tiada RPH untuk dicetak.");return;}
 
   const sand = document.getElementById("printSandbox");
-  sand.innerHTML = ""; // bersihkan terlebih dahulu
+  sand.innerHTML = "";
 
-  // dedupe berdasarkan gabungan minggu + tarikh + hari + masa
   const seen = new Set();
   nodes.forEach(n=>{
     const key = [
       n.dataset.week,
-      n.querySelector(".kv b + div")?.textContent, // Subject
-      n.querySelector(".kv b + div + b + div")?.textContent, // Year
-      n.querySelectorAll(".kv b + div")[2]?.textContent, // Day
-      n.querySelectorAll(".kv b + div")[3]?.textContent, // Time
-      n.querySelectorAll(".kv b + div")[5]?.textContent  // Date
+      n.querySelector(".kv b + div")?.textContent,
+      n.querySelector(".kv b + div + b + div")?.textContent,
+      n.querySelectorAll(".kv b + div")[2]?.textContent,
+      n.querySelectorAll(".kv b + div")[3]?.textContent,
+      n.querySelectorAll(".kv b + div")[5]?.textContent
     ].join("|");
 
     if(!seen.has(key)){
       const clone = n.cloneNode(true);
-      // buang butang cetak per-item
       const btn = clone.querySelector(".footer-line");
       if(btn) btn.remove();
       clone.style.display = "";
@@ -784,7 +486,6 @@ function printNodes(nodes){
     }
   });
 
-  // aktifkan mod printing
   document.body.classList.add("printing");
 
   const cleanup = () => {
@@ -792,32 +493,19 @@ function printNodes(nodes){
     sand.innerHTML = "";
   };
 
-  // cuba gunakan afterprint, dengan fallback timeout
   const onAfter = () => { cleanup(); window.removeEventListener("afterprint", onAfter); };
   window.addEventListener("afterprint", onAfter, { once:true });
 
-  // cetak
   window.print();
 
-  // Fallback (sekiranya afterprint tidak terpicu)
   setTimeout(()=>{
     if(document.body.classList.contains("printing")) cleanup();
   }, 1500);
 }
 
-// Butang HANTAR → buka pautan Google Apps Script
 document.getElementById("sendBtn").addEventListener("click", () => {
-  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec", "_blank");
+  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec  ", "_blank");
 });
-
-/* Auto isi dropdown minggu kosong pada mula (default 42) */
-(function initWeekDropdown(){
-  mingguSel.innerHTML = "";
-  for(let i=1;i<=42;i++){
-    const o=document.createElement("option"); o.value=i; o.textContent="Minggu "+i;
-    mingguSel.appendChild(o);
-  }
-})();
 </script>
 </body>
 </html>
