@@ -152,6 +152,11 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const jadualBody = document.getElementById("jadualBody");
+  if (!jadualBody) {
+    console.error("Element #jadualBody tidak wujud!");
+    return;
+  }
+
   ["Isnin","Selasa","Rabu","Khamis","Jumaat"].forEach(h=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `<td style="width:160px"><b>${h}</b></td>
@@ -171,11 +176,9 @@ async function loadJsonData() {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
-    // Rebuild EN_UNITS and POOLS from JSON structure
     EN_UNITS = {};
     POOLS = data;
 
-    // Build EN_UNITS as array of unit names per year
     for (const [year, unitsObj] of Object.entries(data)) {
       EN_UNITS[year] = Object.keys(unitsObj);
     }
@@ -185,22 +188,31 @@ async function loadJsonData() {
   }
 }
 
-// Initialize dropdown with placeholder until data loads
-(function initWeekDropdown(){
+// Initialize dropdown with real week count after data loads
+async function initWeekDropdown() {
+  await loadJsonData();
+
+  const dates = [...workingDatesInCalendar()];
+  const datedWeeks = computeWeekNumbers(dates);
+  const maxWeek = datedWeeks.at(-1)?.week || 1;
+
   const mingguSel = document.getElementById("mingguSelect");
   mingguSel.innerHTML = "";
-  for(let i=1;i<=42;i++){
-    const o=document.createElement("option"); o.value=i; o.textContent="Minggu "+i;
+  for(let i=1; i<=maxWeek; i++){
+    const o = document.createElement("option");
+    o.value = i;
+    o.textContent = "Minggu " + i;
     mingguSel.appendChild(o);
   }
-})();
+}
 
-// Load data on startup
-loadJsonData();
+// Load data on startup and initialize dropdown
+loadJsonData().then(() => {
+  initWeekDropdown();
+});
 
-/* ==============================================================
-   Takwim Sekolah 2025 (unchanged)
-   ============================================================== */
+/* ============================================================== */
+/* Takwim Sekolah 2025 (unchanged) */
 const TAKWIM = [
   ["2025-02-17","2025-02-28"],
   ["2025-03-01","2025-03-31"],
@@ -216,9 +228,8 @@ const TAKWIM = [
   ["2025-12-01","2025-12-19"]
 ];
 
-/* =======================
-   Util Tarikh & Minggu
-   ======================= */
+/* ======================= */
+/* Util Tarikh & Minggu */
 const HARI_MS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
 const HARI_EN = { "Isnin":"MONDAY","Selasa":"TUESDAY","Rabu":"WEDNESDAY","Khamis":"THURSDAY","Jumaat":"FRIDAY" };
 
@@ -245,9 +256,8 @@ function fmtDateMS(date){
   return date.toLocaleDateString("ms-MY", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 }
 
-/* =======================
-   Generate RPH (Modified)
-   ======================= */
+/* ======================= */
+/* Generate RPH (Modified) */
 const output = document.getElementById("output");
 const genBtn = document.getElementById("genBtn");
 const subjectSel = document.getElementById("subject");
@@ -333,49 +343,38 @@ genBtn.addEventListener("click", async () => {
     // Pilih 3 kemahiran unik secara rawak
     const selectedSkills = getRandomUniqueElements(skillNames, 3);
 
-    // Gabungkan kandungan dari 3 kemahiran
+    // Gabungkan kandungan dari 3 kemahiran — TETAPI hanya SATU aktiviti & penilaian per kemahiran
     let combinedStandards = [];
     let combinedObjectives = [];
     let combinedActivities = [];
     let combinedAssessment = [];
     let combinedAids = [];
 
-// Pilih 3 kemahiran unik secara rawak
-const selectedSkills = getRandomUniqueElements(skillNames, 3);
+    selectedSkills.forEach(skill => {
+      const skillPool = unitData[skill];
+      const randomItem = skillPool[Math.floor(Math.random() * skillPool.length)];
 
-// Gabungkan kandungan dari 3 kemahiran — TETAPI hanya SATU aktiviti & penilaian per kemahiran
-let combinedStandards = [];
-let combinedObjectives = [];
-let combinedActivities = [];
-let combinedAssessment = [];
-let combinedAids = [];
+      combinedStandards.push(`${skill}: ${randomItem.standards}`);
+      combinedObjectives.push(`${skill}: ${randomItem.objectives}`);
 
-selectedSkills.forEach(skill => {
-  const skillPool = unitData[skill];
-  const randomItem = skillPool[Math.floor(Math.random() * skillPool.length)];
+      // 🛠️ UNTUK ACTIVITIES: pilih SATU sahaja secara rawak dari senarai
+      if (randomItem.activities && randomItem.activities.length > 0) {
+        const randomActivity = randomItem.activities[Math.floor(Math.random() * randomItem.activities.length)];
+        combinedActivities.push(`${skill}: ${randomActivity}`);
+      }
 
-  // Tetap gabungkan standards & objectives (ia biasanya satu string sahaja)
-  combinedStandards.push(`${skill}: ${randomItem.standards}`);
-  combinedObjectives.push(`${skill}: ${randomItem.objectives}`);
+      // 🛠️ UNTUK ASSESSMENT: pilih SATU sahaja secara rawak dari senarai
+      if (randomItem.assessment && randomItem.assessment.length > 0) {
+        const randomAssessment = randomItem.assessment[Math.floor(Math.random() * randomItem.assessment.length)];
+        combinedAssessment.push(`${skill}: ${randomAssessment}`);
+      }
 
-  // 🛠️ UNTUK ACTIVITIES: pilih SATU sahaja secara rawak dari senarai
-  if (randomItem.activities && randomItem.activities.length > 0) {
-    const randomActivity = randomItem.activities[Math.floor(Math.random() * randomItem.activities.length)];
-    combinedActivities.push(`${skill}: ${randomActivity}`);
-  }
+      // Tetap gabungkan aids (dan buang duplikat kemudian)
+      combinedAids.push(...randomItem.aids);
+    });
 
-  // 🛠️ UNTUK ASSESSMENT: pilih SATU sahaja secara rawak dari senarai
-  if (randomItem.assessment && randomItem.assessment.length > 0) {
-    const randomAssessment = randomItem.assessment[Math.floor(Math.random() * randomItem.assessment.length)];
-    combinedAssessment.push(`${skill}: ${randomAssessment}`);
-  }
-
-  // Tetap gabungkan aids (dan buang duplikat kemudian)
-  combinedAids.push(...randomItem.aids);
-});
-
-// Buang duplikat aids
-combinedAids = [...new Set(combinedAids)];
+    // Buang duplikat aids
+    combinedAids = [...new Set(combinedAids)];
 
     const node = renderRPH({
       subject: "English",
@@ -396,21 +395,19 @@ combinedAids = [...new Set(combinedAids)];
     output.appendChild(node);
   });
 
-  // 👇 PERBAIKAN UTAMA: Tunggu sekejap untuk pastikan DOM stabil
-setTimeout(() => {
-  // Dapatkan semua minggu yang ada RPH
-  const weeksWithRPH = [...new Set(Array.from(document.querySelectorAll(".rph")).map(n => n.dataset.week))].map(Number).sort((a,b) => a - b);
-  
-  // Jika ada RPH, pilih minggu pertama yang wujud
-  if (weeksWithRPH.length > 0) {
-    const firstWeek = weeksWithRPH[0];
-    mingguSel.value = firstWeek;
-    filterByWeek();
-  } else {
-    // Jika tiada RPH langsung, biarkan dropdown dan paparkan amaran
-    alert("Tiada RPH dijana. Sila semak input jadual masa dan data unit.");
-  }
-}, 0);
+  // 👇 PERBAIKAN UTAMA: Pilih minggu pertama yang ada RPH
+  setTimeout(() => {
+    const weeksWithRPH = [...new Set(Array.from(document.querySelectorAll(".rph")).map(n => n.dataset.week))].map(Number).sort((a,b) => a - b);
+    
+    if (weeksWithRPH.length > 0) {
+      const firstWeek = weeksWithRPH[0];
+      mingguSel.value = firstWeek;
+      filterByWeek();
+      output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      alert("Tiada RPH dijana. Sila semak input jadual masa dan data unit.");
+    }
+  }, 0);
 });
 
 // Helper: Get N random unique elements from array
@@ -419,9 +416,8 @@ function getRandomUniqueElements(arr, n) {
   return shuffled.slice(0, n);
 }
 
-/* =======================
-   Renderer RPH (Perbaiki escapeHTML)
-   ======================= */
+/* ======================= */
+/* Renderer RPH */
 function renderList(items){
   return `<ul>${items.map(i=>`<li>${escapeHTML(i)}</li>`).join("")}</ul>`;
 }
@@ -429,8 +425,8 @@ function renderList(items){
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g, m => ({
     '&': '&amp;',
-    '<': '<',   // 🛠️ DIPERBAIKI: sebelum ini hilang <
-    '>': '>',   // 🛠️ DIPERBAIKI: sebelum ini hilang >
+    '<': '<',
+    '>': '>',
     '"': '&quot;',
     "'": '&#39;'
   }[m]));
@@ -493,13 +489,12 @@ function renderRPH(data){
   return wrap;
 }
 
-/* =======================
-   Cetak & Tapis (Pastikan fungsi ini dipanggil selepas DOM stabil)
-   ======================= */
+/* ======================= */
+/* Cetak & Tapis */
 function filterByWeek(){
-  const w = parseInt(mingguSel.value || "0", 10); // 🛠️ Tambah radix 10 untuk parseInt
+  const w = parseInt(mingguSel.value || "0", 10);
   const rphNodes = document.querySelectorAll(".rph");
-  if (rphNodes.length === 0) return; // 🛡️ Jika tiada RPH, jangan buat apa-apa
+  if (rphNodes.length === 0) return;
 
   rphNodes.forEach(node => {
     const nodeWeek = parseInt(node.dataset.week, 10);
@@ -519,11 +514,11 @@ function printNodes(nodes){
   const seen = new Set();
   nodes.forEach(n => {
     const selectors = [
-      n.querySelector(".kv b + div")?.textContent,           // Subject
-      n.querySelector(".kv b + div + b + div")?.textContent, // Year
-      n.querySelectorAll(".kv b + div")[2]?.textContent,     // Day
-      n.querySelectorAll(".kv b + div")[3]?.textContent,     // Time
-      n.querySelectorAll(".kv b + div")[5]?.textContent      // Date
+      n.querySelector(".kv b + div")?.textContent,
+      n.querySelector(".kv b + div + b + div")?.textContent,
+      n.querySelectorAll(".kv b + div")[2]?.textContent,
+      n.querySelectorAll(".kv b + div")[3]?.textContent,
+      n.querySelectorAll(".kv b + div")[5]?.textContent
     ];
     const key = [n.dataset.week, ...selectors].join("|");
 
@@ -557,7 +552,7 @@ function printNodes(nodes){
   }, 1500);
 }
 
-// 👇 PASANG EVENT LISTENER UNTUK DROPDOWN MINGGU — PEMBAIKAN UTAMA
+// 👇 Pasang event listener untuk dropdown minggu
 mingguSel.addEventListener("change", filterByWeek);
 
 // 👇 Event listener untuk "Cetak Minggu Dipilih"
