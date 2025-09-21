@@ -465,7 +465,10 @@ function renderRPH(data){
    ======================= */
 function filterByWeek(){
   const w = parseInt(mingguSel.value || "0", 10); // 🛠️ Tambah radix 10 untuk parseInt
-  document.querySelectorAll(".rph").forEach(node => {
+  const rphNodes = document.querySelectorAll(".rph");
+  if (rphNodes.length === 0) return; // 🛡️ Jika tiada RPH, jangan buat apa-apa
+
+  rphNodes.forEach(node => {
     const nodeWeek = parseInt(node.dataset.week, 10);
     node.style.display = (nodeWeek === w) ? "" : "none";
   });
@@ -521,8 +524,23 @@ function printNodes(nodes){
   }, 1500);
 }
 
+// 👇 PASANG EVENT LISTENER UNTUK DROPDOWN MINGGU — PEMBAIKAN UTAMA
+mingguSel.addEventListener("change", filterByWeek);
+
+// 👇 Event listener untuk "Cetak Minggu Dipilih"
+document.getElementById("printWeekBtn").addEventListener("click", () => {
+  const selectedWeek = parseInt(mingguSel.value, 10);
+  const nodesToPrint = Array.from(document.querySelectorAll(".rph"))
+    .filter(node => parseInt(node.dataset.week, 10) === selectedWeek);
+  if (nodesToPrint.length === 0) {
+    alert("Tiada RPH untuk minggu ini.");
+    return;
+  }
+  printNodes(nodesToPrint);
+});
+
 document.getElementById("sendBtn").addEventListener("click", () => {
-  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec", "_blank");
+  window.open("https://script.google.com/a/macros/moe-dl.edu.my/s/AKfycbz_5pyWVWYRalnUElx8v4dRZ2pPTiC7dsXc8l77UqpMUcYZ736Ul-0ykUNEhtgnS8A/exec  ", "_blank");
 });
 </script>
 </body>
