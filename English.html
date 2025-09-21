@@ -340,19 +340,42 @@ genBtn.addEventListener("click", async () => {
     let combinedAssessment = [];
     let combinedAids = [];
 
-    selectedSkills.forEach(skill => {
-      const skillPool = unitData[skill];
-      const randomItem = skillPool[Math.floor(Math.random() * skillPool.length)];
+// Pilih 3 kemahiran unik secara rawak
+const selectedSkills = getRandomUniqueElements(skillNames, 3);
 
-      combinedStandards.push(`${skill}: ${randomItem.standards}`);
-      combinedObjectives.push(`${skill}: ${randomItem.objectives}`);
-      combinedActivities.push(...randomItem.activities.map(a => `${skill}: ${a}`));
-      combinedAssessment.push(...randomItem.assessment.map(a => `${skill}: ${a}`));
-      combinedAids.push(...randomItem.aids);
-    });
+// Gabungkan kandungan dari 3 kemahiran — TETAPI hanya SATU aktiviti & penilaian per kemahiran
+let combinedStandards = [];
+let combinedObjectives = [];
+let combinedActivities = [];
+let combinedAssessment = [];
+let combinedAids = [];
 
-    // Buang duplikat aids
-    combinedAids = [...new Set(combinedAids)];
+selectedSkills.forEach(skill => {
+  const skillPool = unitData[skill];
+  const randomItem = skillPool[Math.floor(Math.random() * skillPool.length)];
+
+  // Tetap gabungkan standards & objectives (ia biasanya satu string sahaja)
+  combinedStandards.push(`${skill}: ${randomItem.standards}`);
+  combinedObjectives.push(`${skill}: ${randomItem.objectives}`);
+
+  // 🛠️ UNTUK ACTIVITIES: pilih SATU sahaja secara rawak dari senarai
+  if (randomItem.activities && randomItem.activities.length > 0) {
+    const randomActivity = randomItem.activities[Math.floor(Math.random() * randomItem.activities.length)];
+    combinedActivities.push(`${skill}: ${randomActivity}`);
+  }
+
+  // 🛠️ UNTUK ASSESSMENT: pilih SATU sahaja secara rawak dari senarai
+  if (randomItem.assessment && randomItem.assessment.length > 0) {
+    const randomAssessment = randomItem.assessment[Math.floor(Math.random() * randomItem.assessment.length)];
+    combinedAssessment.push(`${skill}: ${randomAssessment}`);
+  }
+
+  // Tetap gabungkan aids (dan buang duplikat kemudian)
+  combinedAids.push(...randomItem.aids);
+});
+
+// Buang duplikat aids
+combinedAids = [...new Set(combinedAids)];
 
     const node = renderRPH({
       subject: "English",
