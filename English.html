@@ -397,10 +397,20 @@ combinedAids = [...new Set(combinedAids)];
   });
 
   // 👇 PERBAIKAN UTAMA: Tunggu sekejap untuk pastikan DOM stabil
-  setTimeout(() => {
-    mingguSel.value = "1";
-    filterByWeek(); // Sekarang akan berfungsi!
-  }, 0);
+setTimeout(() => {
+  // Dapatkan semua minggu yang ada RPH
+  const weeksWithRPH = [...new Set(Array.from(document.querySelectorAll(".rph")).map(n => n.dataset.week))].map(Number).sort((a,b) => a - b);
+  
+  // Jika ada RPH, pilih minggu pertama yang wujud
+  if (weeksWithRPH.length > 0) {
+    const firstWeek = weeksWithRPH[0];
+    mingguSel.value = firstWeek;
+    filterByWeek();
+  } else {
+    // Jika tiada RPH langsung, biarkan dropdown dan paparkan amaran
+    alert("Tiada RPH dijana. Sila semak input jadual masa dan data unit.");
+  }
+}, 0);
 });
 
 // Helper: Get N random unique elements from array
